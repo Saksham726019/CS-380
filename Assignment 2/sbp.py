@@ -7,13 +7,28 @@ class SlidingBrick:
         self.__board:list = board
         self.__masterPosition:int = 0
     
-    def printBoard(self):
+    def getBoard(self) -> list:
+        return self.__board
+    
+    def printBoard(self) -> None:
         print(f"{self.__width},{self.__height},")
-        
+
         # Print each row of the board
         for row in self.__board:
-            print(",".join(map(str, row)) + ",")
+            items:str = ""
 
+            for item in row:
+                items += str(item) + ", "
+            
+            print(items)
+
+def cloneOriginalBoard(sliding_brick: SlidingBrick) -> list:
+    original_board: list = []
+
+    for row in sliding_brick.getBoard():
+        original_board.append(row[:])
+
+    return original_board
 
 # Function to load the game from the file and create the Sliding Brick instance and then print the board.
 def loadGame(filename) -> SlidingBrick:
@@ -38,29 +53,42 @@ def loadGame(filename) -> SlidingBrick:
             board.append(row)
     
     # Now that we have the board, we will create an instance of our class
-    sliding_brick_puzzle = SlidingBrick(width, height, board)
-    return sliding_brick_puzzle
+    sliding_brick = SlidingBrick(width, height, board)
+    return sliding_brick
 
 
 # Main function.
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: sbp.py <command> [<filename>]")
+        print("Usage: sh run.sh <command> [<optional-argument>]")
         sys.exit(1)
 
-    command = sys.argv[1]
+    command:str = sys.argv[1]
 
     if command == "print":
         if len(sys.argv) < 3:
             print("Error: Missing filename for 'print' command.")
             sys.exit(1)
-        filename = sys.argv[2]
+
+        filename:str = sys.argv[2]
 
         # Let's load the game.
-        sliding_brick_puzzle:SlidingBrick = loadGame(filename)
+        sliding_brick:SlidingBrick = loadGame(filename)
 
         # Print the board.
-        sliding_brick_puzzle.printBoard()
+        sliding_brick.printBoard()
     else:
         print(f"Error: Unknown command '{command}'.")
         sys.exit(1)
+    
+    original_board: list = cloneOriginalBoard(sliding_brick)
+
+    # # Test. Remove later
+    # print("\nCloned Original board")
+    # for row in original_board:
+    #     items: str = ""
+    #     for item in row:
+    #         items += str(item) + ", "
+    #     print(items)
+
+    
