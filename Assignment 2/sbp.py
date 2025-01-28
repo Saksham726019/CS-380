@@ -2,10 +2,10 @@ import sys
 
 class SlidingBrick:
     def __init__(self, w, h, board):
-        self.__width:int = w
-        self.__height:int = h
-        self.__board:list = board
-        self.__masterPosition:int = 0
+        self.__width: int = w
+        self.__height: int = h
+        self.__board: list = board
+        self.__masterBrickPosition: int = 0
     
     def getBoard(self) -> list:
         return self.__board
@@ -15,13 +15,23 @@ class SlidingBrick:
 
         # Print each row of the board
         for row in self.__board:
-            items:str = ""
+            items: str = ""
 
             for item in row:
                 items += str(item) + ", "
             
             print(items)
+    
+    # Function to check if we have reached the goal state.
+    def isGoalState(self) -> bool:
+        for row in self.__board:
+            if -1 in row:
+                return False
+                    
+        return True
 
+
+# Function to copy and return the initial (original) board.
 def cloneOriginalBoard(sliding_brick: SlidingBrick) -> list:
     original_board: list = []
 
@@ -30,20 +40,21 @@ def cloneOriginalBoard(sliding_brick: SlidingBrick) -> list:
 
     return original_board
 
+
 # Function to load the game from the file and create the Sliding Brick instance and then print the board.
 def loadGame(filename) -> SlidingBrick:
     with open(filename, "r") as fp:
         # First line contains the width and height.
         parts = fp.readline().strip().split(",")
-        width:int = int(parts[0])
-        height:int = int(parts[1])
+        width: int = int(parts[0])
+        height: int = int(parts[1])
 
         # From second line is the board.
-        board:list = []
+        board: list = []
 
         # Each line has the item of the board. We will add it to the board row by row.
         for line in fp:
-            row:list = []
+            row: list = []
             board_items = line.strip().split(",")
 
             for item in board_items:
@@ -63,24 +74,38 @@ if __name__ == "__main__":
         print("Usage: sh run.sh <command> [<optional-argument>]")
         sys.exit(1)
 
-    command:str = sys.argv[1]
+    command: str = sys.argv[1]
 
     if command == "print":
         if len(sys.argv) < 3:
             print("Error: Missing filename for 'print' command.")
             sys.exit(1)
 
-        filename:str = sys.argv[2]
+        filename: str = sys.argv[2]
 
-        # Let's load the game.
-        sliding_brick:SlidingBrick = loadGame(filename)
+        # Load the game.
+        sliding_brick: SlidingBrick = loadGame(filename)
 
         # Print the board.
         sliding_brick.printBoard()
+
+    elif command == "done":
+        if len(sys.argv) < 3:
+            print("Error: Missing filename for 'done' command.")
+            sys.exit(1)
+
+        filename: str = sys.argv[2]
+
+        # Load the game.
+        sliding_brick: SlidingBrick = loadGame(filename)
+
+        # Check if we are in goal state.
+        print(sliding_brick.isGoalState())
+
     else:
         print(f"Error: Unknown command '{command}'.")
         sys.exit(1)
-    
+
     original_board: list = cloneOriginalBoard(sliding_brick)
 
     # # Test. Remove later
@@ -91,4 +116,3 @@ if __name__ == "__main__":
     #         items += str(item) + ", "
     #     print(items)
 
-    
