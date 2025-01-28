@@ -8,14 +8,11 @@ class SlidingBrick:
         self.__masterPosition:int = 0
     
     def printBoard(self):
-        print(f"{self.__width}, {self.__height},")
-
-        # Add each item of the board to the items:str.
-        items:str = ""
-        for item in self.__board:
-            items += f"{item},"
+        print(f"{self.__width},{self.__height},")
         
-        print(items)
+        # Print each row of the board
+        for row in self.__board:
+            print(",".join(map(str, row)) + ",")
 
 
 # Function to load the game from the file and create the Sliding Brick instance and then print the board.
@@ -35,7 +32,8 @@ def loadGame(filename) -> SlidingBrick:
             board_items = line.strip().split(",")
 
             for item in board_items:
-                row.append(int(item))
+                if item.strip():
+                    row.append(int(item))
             
             board.append(row)
     
