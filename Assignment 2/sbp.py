@@ -1,9 +1,9 @@
 import sys
 
-class Board:
-    def __init__(self, board: list):
-        self.__board: list = board
-        self.__parent = None
+# class Board:
+#     def __init__(self, board: list):
+#         self.__board: list = board
+#         self.__parent = None
 
 class SlidingBrick:
     def __init__(self, w: int, h: int, board: list):
@@ -98,9 +98,38 @@ class SlidingBrick:
 
         return adjacent
 
+    # Function to get the moves of masterbrick towards the exit (-1) if there is any.
+    def masterBrickMovesToExit(self) -> set:
+        # Get the master brick locations.
+        master_brick_locations: list = self.getMasterBrickPositions()
+
+        # Directions (up, down, left, right)
+        directions: dict = {
+            "up": (-1, 0),
+            "down": (1, 0),
+            "left": (0, -1),
+            "right": (0, 1)
+        }
+
+        moves = set()
+
+        # Check all positions of the master brick.
+        for h, w in master_brick_locations:
+            for direction, (row_offset, col_offset) in directions.items():
+                new_row, new_col = h + row_offset, w + col_offset
+
+                # Check if the new position is within bounds and is an exit.
+                if 0 <= new_row < self.__height and 0 <= new_col < self.__width:
+                    if self.__board[new_row][new_col] == -1:
+                        moves.add((2, direction))
+
+        return moves
+
+
     # Function to get the available moves based on the empty cells position.
     def getMoves(self) -> set:
-        moves = set()    # We'll store valid moves in this set.
+        # We will store the moves of masterbrick towards the exit (-1) if there is any.
+        moves: set = self.masterBrickMovesToExit()
 
         # Directions (up, down, left, right)
         directions: dict = {
@@ -228,7 +257,6 @@ class SlidingBrick:
                                         if (adjacent_row + directions[opposite_directions[direction]][0], adjacent_column + directions[opposite_directions[direction]][1]) in emptyCells:
                                             moves.add((self.__board[new_row][new_column], opposite_directions[direction]))
 
-        
         return moves
 
     # Function to apply the moves.
@@ -269,6 +297,7 @@ def loadGame(filename) -> SlidingBrick:
     # Now that we have the board, we will create an instance of our class
     sliding_brick = SlidingBrick(width, height, board)
     return sliding_brick
+
 
 # Main function.
 if __name__ == "__main__":
@@ -350,5 +379,10 @@ if __name__ == "__main__":
     # Test. Remove later
     # moves: set = sliding_brick.getMoves()
     # # Print the moves.
+    # for move in moves:
+    #     print(f"({move[0]}, {move[1]})")
+
+    # Test. Remove later
+    # moves: set = sliding_brick.masterBrickMovesToExit()
     # for move in moves:
     #     print(f"({move[0]}, {move[1]})")
