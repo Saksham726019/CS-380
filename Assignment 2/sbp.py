@@ -46,9 +46,45 @@ class SlidingBrick:
         self.findEmptyCells()
         return self.__emptyCells
     
+    # Function to check if adjacent cells are the same valued bricks.
+    def checkAdjacent(self, h: int, w: int, brick: int) -> set:
+        # Directions (up, down, left, right)
+        directions = {
+            "up": (-1, 0),
+            "down": (1, 0),
+            "left": (0, -1),
+            "right": (0, 1)
+        }
+
+        adjacent = set()        # Use a set to store unique positions.
+        queue: list = [(h, w)]  # Store the locations as we traverse using bfs.
+
+        for direction, (row_offset, col_offset) in directions.items():
+            front_pointer: int = 0
+
+            while front_pointer < len(queue):
+                row, col = queue[front_pointer]
+
+                new_row = row + row_offset
+                new_col = col + col_offset
+
+                # Check if the new location is within boundaries.
+                if 0 <= new_row < self.__height and 0 <= new_col < self.__width:
+                    # If it's the same brick, then add the location to set and continue in the same direction.
+                    if self.__board[new_row][new_col] == brick:
+                        adjacent.add((new_row, new_col))
+                        queue.append((new_row, new_col))
+                        front_pointer += 1
+                    else:
+                        break  # We no longer need to go in that direction if different brick is found.
+
+        return adjacent
+
     # Function to get the available moves based on the empty cells position.
-    def getMoves(self) -> list:
-        moves: list = []    # We'll store valid moves in this list.
+    def getMoves(self) -> set:
+
+        # MAKE moves SET.
+        moves = set()    # We'll store valid moves in this list.
 
         # Directions (up, down, left, right)
         directions: dict = {
@@ -70,27 +106,118 @@ class SlidingBrick:
 
         # We will check each direction and add whatever is valid to the moves list. Implement the check for masterbrick.
         for h, w in emptyCells:
-            for direction, (row, column) in directions.items():
-                new_row, new_column = (h + row), (w + column)
+            for direction, (row_offset, column_offset) in directions.items():
+                new_row, new_column = (h + row_offset), (w + column_offset)
 
                 # Check if new row and column are within bounds.
                 if (0 <= new_row < self.__height) and (0 <= new_column < self.__width):
                     # Check if the location is wall or not (1).
                     if (self.__board[new_row][new_column] > 0) and (self.__board[new_row][new_column] != 1):
-                        # Check if the location is not a master brick.
-                        if (self.__board[new_row][new_column] != 2):
-                            moves.append((self.__board[new_row][new_column], opposite_directions[direction]))
+                        # Check the adjacents.
+                        adjacents: set = self.checkAdjacent(new_row, new_column, self.__board[new_row][new_column])
 
-                            # If the location is master brick, we can only move certain direction based on how master brick is on the board.
-                        elif (self.__board[new_row][new_column] == 2):
-                            pass
+                        # If no adjacents, it means the brick only takes one space and can be moved to any emty space.
+                        if (len(adjacents) == 0):
+                            moves.add((self.__board[new_row][new_column], opposite_directions[direction]))
+
+                        else:
+                            # We will now store unique rows and columns. This will help us figure out it the brick is horizontal or vertical.
+                            rows: set = {location[0] for location in adjacents}
+                            columns: set = {location[1] for location in adjacents}
+
+                            # If there is one adjacent, we need to check if it's vertical or horizontal.
+                            if (len(adjacents) == 1):
+                                # If row is same, then horizonatal. If column is same then vertical.
+                                # If horizontal, the brick can move freely to left/right empty spot.
+                                # To move up or down, the brick needs two empty cells on its up/down.
+
+                                # If vertical, the brick can move freely up/down on the empty spot.
+                                # To move left/right, the brick needs two empty cells on its left/right.
+                                
+                                adjacent_row, adjacent_column = list(adjacents)[0]
+
+                                # Check if the rows are same (means brick is horizontal).
+                                if adjacent_row == new_row and adjacent_column != new_column:
+
+                                    # Brick can freely move to left or right.
+                                    if direction in ["left", "right"]:
+                                        moves.add((self.__board[new_row][new_column], opposite_directions[direction]))
+                                    
+                                    # Brick can only move up or down if two empty spaces.
+                                    elif direction in ["up", "down"]:
+                                        if (adjacent_row + directions[opposite_directions[direction]][0], adjacent_column) in emptyCells:
+                                            moves.add((self.__board[new_row][new_column], opposite_directions[direction]))
+                                
+                                # Else, check if columns are same (means brick is vertical).
+                                elif (adjacent_column == new_column) and (adjacent_row != new_row):
+
+                                    # Brick can freely move up and down.
+                                    if direction in ["up", "down"]:
+                                        moves.add((self.__board[new_row][new_column], opposite_directions[direction]))
+
+                                    # Brick can only move left or right if two empty spaces.
+                                    elif direction in ["left", "right"]:
+                                        if (adjacent_row, adjacent_column + directions[opposite_directions[direction]][1]) in emptyCells:
+                                            moves.add((self.__board[new_row][new_column], opposite_directions[direction]))
+
+
+                            elif (len(adjacents) == 2):
+                                # Still the brick could be either horizontal or vertical.
+                                # Same logic as before, but: if horizontal, needs three empty spaces to move up/down. If vertical, needs three empty spaces to move left/right.
+                                
+                                # If rows set has only one item, then the brick is horizontal.
+                                if len(rows) == 1:
+                                    if direction in ["left", "right"]:
+                                        moves.add((self.__board[new_row][new_column], opposite_directions[direction]))
+                                    
+                                    elif direction in ["up", "down"]:
+                                        for adjacent_column in columns:
+                                            if (rows.pop()[0] + directions[opposite_directions[direction]][0], adjacent_column) in emptyCells:
+                                                moves.add((self.__board[new_row][new_column], opposite_directions[direction]))
+                                
+                                # If only one item in columns set, then the brick is vertical.
+                                elif len(columns) == 1:
+                                    if direction in ["up", "down"]:
+                                        moves.add((self.__board[new_row][new_column], opposite_directions[direction]))
+                                    
+                                    elif direction in ["left", "right"]:
+                                        for adjacent_row in rows:
+                                            if (adjacent_row, columns.pop()[0] + directions[opposite_directions[direction]][1]) in emptyCells:
+                                                directions[opposite_directions[direction]][1]
+
+                            elif (len(adjacents) >= 3):
+                                # The board can only be rectangle or squared, could only be horizontal or vertical.
+                                # The logic is same. But, might need different number of spaces on either way, depending on how much space it takes horizontally and vertically.
+                                
+                                if len(rows) == 1:
+                                    if direction in ["left", "right"]:
+                                        moves.add((self.__board[new_row][new_column], opposite_directions[direction]))
+                                    
+                                    elif direction in ["up", "down"]:
+                                        for adjacent_column in columns:
+                                            if (rows.pop()[0] + directions[opposite_directions[direction]][0], adjacent_column) in emptyCells:
+                                                moves.add((self.__board[new_row][new_column], opposite_directions[direction]))
+                                
+                                elif len(columns) == 1:
+                                    if direction in ["up", "down"]:
+                                        moves.add((self.__board[new_row][new_column], opposite_directions[direction]))
+                                    
+                                    elif direction in ["left", "right"]:
+                                        for adjacent_row in rows:
+                                            if (adjacent_row, columns.pop()[0] + directions[opposite_directions[direction]][1]) in emptyCells:
+                                                directions[opposite_directions[direction]][1]
+                                
+                                else:
+                                    for adjacent_row, adjacent_column in adjacents:
+                                        if (adjacent_row + directions[opposite_directions[direction]][0], adjacent_column + directions[opposite_directions[direction]][1]) in emptyCells:
+                                            moves.add((self.__board[new_row][new_column], opposite_directions[direction]))
 
         
         return moves
 
 
 # Function to copy and return the initial (original) board.
-def cloneOriginalBoard(sliding_brick: SlidingBrick) -> list:
+def cloneBoard(sliding_brick: SlidingBrick) -> list:
     original_board: list = []
 
     for row in sliding_brick.getBoard():
@@ -179,9 +306,8 @@ if __name__ == "__main__":
         print(f"Error: Unknown command '{command}'.")
         sys.exit(1)
 
-    original_board: list = cloneOriginalBoard(sliding_brick)
-
     # # Test. Remove later
+    # original_board: list = cloneOriginalBoard(sliding_brick)
     # print("\nCloned Original board")
     # for row in original_board:
     #     items: str = ""
@@ -191,3 +317,14 @@ if __name__ == "__main__":
 
     # Test. Remove later
     # print(f"\nEmpty cells: {sliding_brick.getEmptyCells()}")
+
+    # Test. Remove later
+    # board: list = sliding_brick.getBoard()
+    # print(f"Finding adjacents for {board[4][2]}")
+    # print(f"Adjacent set:\n{sliding_brick.checkAdjacent(4, 2, 8)}")
+    
+    # Test. Remove later
+    # moves: set = sliding_brick.getMoves()
+    # # Print the moves.
+    # for move in moves:
+    #     print(f"({move[0]}, {move[1]})")
