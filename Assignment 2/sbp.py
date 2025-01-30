@@ -291,6 +291,10 @@ class SlidingBrick:
             if found:
                 break
         
+        # TO DO: Get the adjacents of h, w from checkAdjacents(). If a single axis brick, use min, max of its row or column to swap with 0.
+        # Also, if master brick is moved to exit (-1), swap -1 and 2 and fill the old place of 2 with 0.
+
+        # Below is for when there is no adjacent.
         if (0 <= new_row < self.__height) and (0 <= new_column < self.__width):
             print(f"Swapping ({h}, {w}) with ({new_row}, {new_column})")
             new_board[h][w], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[h][w]
