@@ -1,10 +1,5 @@
 import sys
 
-# class Board:
-#     def __init__(self, board: list):
-#         self.__board: list = board
-#         self.__parent = None
-
 class SlidingBrick:
     def __init__(self, w: int, h: int, board: list):
         self.__width: int = w
@@ -29,6 +24,15 @@ class SlidingBrick:
                 items += str(item) + ", "
             
             print(items)
+    
+    # Function to copy and return the initial (original) board.
+    def cloneBoard(self) -> list:
+        cloned_board: list = []
+
+        for row in self.__board:
+            cloned_board.append(row[:])
+
+        return cloned_board
     
     # Function to check if we have reached the goal state.
     def isGoalState(self) -> bool:
@@ -124,7 +128,6 @@ class SlidingBrick:
                         moves.add((2, direction))
 
         return moves
-
 
     # Function to get the available moves based on the empty cells position.
     def getMoves(self) -> set:
@@ -260,17 +263,41 @@ class SlidingBrick:
         return moves
 
     # Function to apply the moves.
-    def applyMove(self):
-        pass
+    def applyMove(self, move: tuple) -> None:
 
-# Function to copy and return the initial (original) board.
-def cloneBoard(sliding_brick: SlidingBrick) -> list:
-    original_board: list = []
+        # Directions (up, down, left, right)
+        directions = {
+            "up": (-1, 0),
+            "down": (1, 0),
+            "left": (0, -1),
+            "right": (0, 1)
+        }
 
-    for row in sliding_brick.getBoard():
-        original_board.append(row[:])
+        # We will clone the board.
+        new_board: list = self.cloneBoard()
 
-    return original_board
+        # Get the row and column offset.
+        row_offset, column_offset = directions[move[1]]
+        found: bool = False
+
+        # Find the location of the brick
+        for h in range(self.__height):
+            for w in range(self.__width):
+                if new_board[h][w] == move[0]:
+                    new_row, new_column = (h + row_offset), (w + column_offset)
+                    found = True
+                    break
+            
+            if found:
+                break
+        
+        if (0 <= new_row < self.__height) and (0 <= new_column < self.__width):
+            print(f"Swapping ({h}, {w}) with ({new_row}, {new_column})")
+            new_board[h][w], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[h][w]
+        
+        self.__board = new_board
+        self.printBoard()
+
 
 # Function to load the game from the file and create the Sliding Brick instance and then print the board.
 def loadGame(filename) -> SlidingBrick:
@@ -354,6 +381,30 @@ if __name__ == "__main__":
         if len(sys.argv) < 4:
             print(f"Usage: sh run.sh applyMove <file.txt> <(brick, direction)>")
             sys.exit(1)
+
+        filename: str = sys.argv[2]
+
+        move_str: str = sys.argv[3][1 : -1]
+
+        parts = move_str.split(", ")
+
+        if len(parts) == 2:
+            try:
+                brick = int(parts[0])
+                direction = str(parts[1])
+                move: tuple = (brick, direction)
+            except ValueError:
+                print("Error: The brick number should be an integer.")
+                sys.exit(1)
+        else:
+            print("Error: Invalid format. Expected (brick_number, direction).")
+            sys.exit(1)
+        
+        # Load the game.
+        sliding_brick: SlidingBrick = loadGame(filename)
+
+        # Apply the move.
+        sliding_brick.applyMove(move)
 
     else:
         print(f"Error: Unknown command '{command}'.")
