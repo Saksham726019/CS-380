@@ -1,12 +1,17 @@
 import sys
 
+class Board:
+    def __init__(self, board: list):
+        self.__board: list = board
+        self.__parent = None
+
 class SlidingBrick:
-    def __init__(self, w, h, board):
+    def __init__(self, w: int, h: int, board: list):
         self.__width: int = w
         self.__height: int = h
         self.__board: list = board
         self.__emptyCells: list = []  # Store (row/height, column/width) tuple in this list.
-        self.__masterBrickPosition: int = 0
+        self.__masterBrickPositions: list = []
     
     # Function to return the board.
     def getBoard(self) -> list:
@@ -46,6 +51,19 @@ class SlidingBrick:
         self.findEmptyCells()
         return self.__emptyCells
     
+    # Function to find the master brick (2) in the board.
+    def findMasterBrick(self) -> None:
+        for h in range(self.__height):
+            for w in range(self.__width):
+                if self.__board[h][w] == 2:
+                    self.__masterBrickPositions.append((h, w))
+    
+    # Functon to return master brick locations in the board.
+    def getMasterBrickPositions(self) -> list:
+        self.__masterBrickPositions.clear()
+        self.findMasterBrick()
+        return self.__masterBrickPositions
+
     # Function to check if adjacent cells are the same valued bricks.
     def checkAdjacent(self, h: int, w: int, brick: int) -> set:
         # Directions (up, down, left, right)
@@ -82,9 +100,7 @@ class SlidingBrick:
 
     # Function to get the available moves based on the empty cells position.
     def getMoves(self) -> set:
-
-        # MAKE moves SET.
-        moves = set()    # We'll store valid moves in this list.
+        moves = set()    # We'll store valid moves in this set.
 
         # Directions (up, down, left, right)
         directions: dict = {
@@ -215,6 +231,9 @@ class SlidingBrick:
         
         return moves
 
+    # Function to apply the moves.
+    def applyMove(self):
+        pass
 
 # Function to copy and return the initial (original) board.
 def cloneBoard(sliding_brick: SlidingBrick) -> list:
@@ -261,7 +280,7 @@ if __name__ == "__main__":
 
     if command == "print":
         if len(sys.argv) < 3:
-            print(f"Error: Missing filename for {command} command.")
+            print(f"Usage: sh run.sh print <file.txt>")
             sys.exit(1)
 
         filename: str = sys.argv[2]
@@ -274,7 +293,7 @@ if __name__ == "__main__":
 
     elif command == "done":
         if len(sys.argv) < 3:
-            print(f"Error: Missing filename for {command} command.")
+            print(f"Usage: sh run.sh done <file.txt>")
             sys.exit(1)
 
         filename: str = sys.argv[2]
@@ -287,7 +306,7 @@ if __name__ == "__main__":
 
     elif command == "availableMoves":
         if len(sys.argv) < 3:
-            print(f"Error: Missing filename for {command} command.")
+            print(f"Usage: sh run.sh availableMoves <file.txt>")
             sys.exit(1)
 
         filename: str = sys.argv[2]
@@ -301,6 +320,11 @@ if __name__ == "__main__":
         # Print the moves.
         for move in moves:
             print(f"({move[0]}, {move[1]})")
+    
+    elif command == "applyMove":
+        if len(sys.argv) < 4:
+            print(f"Usage: sh run.sh applyMove <file.txt> <(brick, direction)>")
+            sys.exit(1)
 
     else:
         print(f"Error: Unknown command '{command}'.")
