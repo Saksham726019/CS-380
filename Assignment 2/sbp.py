@@ -470,6 +470,30 @@ class SlidingBrick:
 
         self.printBoard()
 
+    # swapIdx function.
+    def swapIdx(self, index_1: int, index_2: int) -> None:
+        for r in range(self.__height):
+            for c in range(self.__width):
+                if self.__board[r][c] == index_1:
+                    self.__board[r][c] = index_2
+                
+                elif self.__board[r][c] == index_2:
+                    self.__board[r][c] = index_1
+
+    # Function to normalize the board.
+    def normalize(self) -> None:
+        next_index: int = 3
+
+        for h in range(self.__height):
+            for w in range(self.__width):
+                if self.__board[h][w] == next_index:
+                    next_index += 1
+                
+                elif self.__board[h][w] > next_index:
+                    self.swapIdx(next_index, self.__board[h][w])
+                    next_index += 1
+        
+        self.printBoard()
 
 # Function to compare the state of two boards.
 def compareState(sliding_brick_1: SlidingBrick, sliding_brick_2: SlidingBrick) -> bool:
@@ -611,6 +635,20 @@ if __name__ == "__main__":
             sys.exit(1)
         
         print(compareState(sliding_brick_1, sliding_brick_2))
+    
+    elif command == "norm":
+        if len(sys.argv) < 3:
+            print(f"Usage: sh run.sh norm <file.txt>")
+            sys.exit(1)
+        
+        filename: str = sys.argv[2]
+
+        sliding_brick: SlidingBrick = loadGame(filename)
+
+        # Normalize the board.
+        sliding_brick.normalize()
+
+
     else:
         print(f"Error: Unknown command '{command}'.")
         sys.exit(1)
