@@ -276,15 +276,18 @@ class SlidingBrick:
         # We will clone the board.
         new_board: list = self.cloneBoard()
 
-        # Get the row and column offset.
+        # Get the row and column offset and brick.
         row_offset, column_offset = directions[move[1]]
+        direction: str = move[1]
+        brick: int = move[0]
+
         found: bool = False
 
         # Find the location of the brick
         for h in range(self.__height):
             for w in range(self.__width):
-                if new_board[h][w] == move[0]:
-                    new_row, new_column = (h + row_offset), (w + column_offset)
+                if new_board[h][w] == brick:
+                    row, column = h, w
                     found = True
                     break
             
@@ -293,11 +296,57 @@ class SlidingBrick:
         
         # TO DO: Get the adjacents of h, w from checkAdjacents(). If a single axis brick, use min, max of its row or column to swap with 0.
         # Also, if master brick is moved to exit (-1), swap -1 and 2 and fill the old place of 2 with 0.
+        adjacents: set = self.checkAdjacent(row, column, move[0])
+        new_row, new_column = (row + row_offset, column + column_offset)
 
         # Below is for when there is no adjacent.
         if (0 <= new_row < self.__height) and (0 <= new_column < self.__width):
-            print(f"Swapping ({h}, {w}) with ({new_row}, {new_column})")
-            new_board[h][w], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[h][w]
+
+            # If no adjacents, it's a single cell brick and can be swapped without worrying about adjacent empty cells.
+            if(len(adjacents) == 0):
+                print(f"Swapping ({h}, {w}) ({brick}) with ({new_row}, {new_column}) ({new_board[new_row][new_column]})")        # Remove this line later.
+                new_board[h][w], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[h][w]
+            
+            else:
+                rows: set = {location[0] for location in adjacents}
+                columns: set = {location[1] for location in adjacents}
+
+                # Brick could be vertical or horizontal.
+                if len(adjacents) == 1:
+                    adjacent_row, adjacent_column = list(adjacents)[0]
+
+                    # If the rows are same (means brick is horizontal).
+                    if row == adjacent_row and column != adjacent_column:
+                        # If going right, swap with min column. If going left, swap with max column.
+                        if direction == "left":
+                            new_board[h][max(w, adjacent_column)], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[h][max(w, adjacent_column)]
+                        
+                        elif direction == "right":
+                            new_board[h][min(w, adjacent_column)], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[h][min(w, adjacent_column)]
+                        
+                        # Swap each location.
+                        elif direction in ["up", "down"]:
+                            # Swap the initial tile.
+                            new_board[h][w], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[h][w]
+
+                            # Swap the adjacent brick with its corresponding empty cell.
+                            new_board[adjacent_row][adjacent_column], new_board[adjacent_row + row_offset][adjacent_column + column_offset] = new_board[adjacent_row + row_offset][adjacent_column + column_offset], new_board[adjacent_row][adjacent_column]
+                    
+                    # If the columns are same (means brick is vertical).
+                    elif row != adjacent_row and column == adjacent_column:
+                        # If going up, swap with max row. If going down, swap with min row.
+                        if direction == "up":
+                            new_board[max(h, adjacent_row)][w], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[max(h, adjacent_row)][w]
+                        
+                        elif direction == "down":
+                            new_board[min(h, adjacent_row)][w], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[min(h, adjacent_row)][w]
+                        
+                        elif direction in ["left", "right"]:
+                            # Swap the initial tile.
+                            new_board[h][w], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[h][w]
+
+                            # Swap the adjacent brick with its corresponding empty cell.
+                            new_board[adjacent_row][adjacent_column], new_board[adjacent_row + row_offset][adjacent_column + column_offset] = new_board[adjacent_row + row_offset][adjacent_column + column_offset], new_board[adjacent_row][adjacent_column]
         
         self.__board = new_board
         self.printBoard()
