@@ -290,7 +290,6 @@ class SlidingBrick:
 
             # If no adjacents, it's a single cell brick and can be swapped without worrying about adjacent empty cells.
             if(len(adjacents) == 0):
-                print(f"Swapping ({row_start}, {column_start}) ({brick}) with ({new_row}, {new_column}) ({new_board[new_row][new_column]})")        # Remove this line later.
                 new_board[row_start][column_start], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[row_start][column_start]
             
             else:
@@ -299,18 +298,15 @@ class SlidingBrick:
 
                 # Brick could be vertical or horizontal.
                 if len(adjacents) == 1:
-                    #print(f"Adjacents = {len(adjacents)} and length of row is {len(rows)} and column is {len(columns)}.\n")
                     adjacent_row, adjacent_column = list(adjacents)[0]
 
                     # If the rows are same (means brick is horizontal).
                     if row_start == adjacent_row and column_start != adjacent_column:
                         # If going right, swap with min column. If going left, swap with max column.
                         if direction == "left":
-                            #print(f"Swapping ({row_start}, {column_start}) ({brick}) with ({new_row}, {new_column}) ({new_board[new_row][new_column]})")
                             new_board[row_start][max(column_start, adjacent_column)], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[row_start][max(column_start, adjacent_column)]
                         
                         elif direction == "right":
-                            #print(f"Swapping ({row_start}, {column_start}) ({brick}) with ({adjacent_row + row_offset}, {adjacent_column + column_offset}) ({new_board[adjacent_row + row_offset][adjacent_column + column_offset]})")
                             new_board[row_start][min(column_start, adjacent_column)], new_board[adjacent_row + row_offset][adjacent_column + column_offset] = new_board[adjacent_row + row_offset][adjacent_column + column_offset], new_board[row_start][min(column_start, adjacent_column)]
                         
                         # Swap each location.
