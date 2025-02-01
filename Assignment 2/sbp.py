@@ -504,23 +504,23 @@ class SlidingBrick:
     def swapIdx(self, index_1: int, index_2: int) -> None:
         for r in range(self.__height):
             for c in range(self.__width):
-                if self.__board[c][r] == index_1:
-                    self.__board[c][r] = index_2
+                if self.__board[r][c] == index_1:
+                    self.__board[r][c] = index_2
                 
-                elif self.__board[c][r] == index_2:
-                    self.__board[c][r] = index_1
+                elif self.__board[r][c] == index_2:
+                    self.__board[r][c] = index_1
 
     # Function to normalize the board.
     def normalize(self) -> None:
         next_index: int = 3
 
-        for r in range(self.__height):
-            for c in range(self.__width):
-                if self.__board[c][r] == next_index:
+        for h in range(self.__height):
+            for w in range(self.__width):
+                if self.__board[h][w] == next_index:
                     next_index += 1
                 
-                elif self.__board[c][r] > next_index:
-                    self.swapIdx(next_index, self.__board[c][r])
+                elif self.__board[h][w] > next_index:
+                    self.swapIdx(next_index, self.__board[h][w])
                     next_index += 1
         
         # self.printBoard()
