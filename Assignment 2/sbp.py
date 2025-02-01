@@ -8,6 +8,14 @@ class SlidingBrick:
         self.__emptyCells: list = []  # Store (row/height, column/width) tuple in this list.
         self.__masterBrickPositions: list = []
     
+    # Function to get the height of the board.
+    def getHeight(self) -> int:
+        return self.__height
+    
+    # Function to get the width of the board.
+    def getWidth(self,) -> int:
+        return self.__width
+    
     # Function to return the board.
     def getBoard(self) -> list:
         return self.__board
@@ -463,6 +471,22 @@ class SlidingBrick:
         self.printBoard()
 
 
+# Function to compare the state of two boards.
+def compareState(sliding_brick_1: SlidingBrick, sliding_brick_2: SlidingBrick) -> bool:
+    if (sliding_brick_1.getHeight() != sliding_brick_2.getHeight()) or (sliding_brick_1.getWidth() != sliding_brick_2.getWidth()):
+        print("Error: Cannot compare boards with different dimensions.")
+        sys.exit(1)
+    
+    board_1: list = sliding_brick_1.getBoard()
+    board_2: list = sliding_brick_2.getBoard()
+
+    for h in range(sliding_brick_1.getHeight()):
+        for w in range(sliding_brick_1.getWidth()):
+            if board_1[h][w] != board_2[h][w]:
+                return False
+    
+    return True
+
 # Function to load the game from the file and create the Sliding Brick instance and then print the board.
 def loadGame(filename) -> SlidingBrick:
     with open(filename, "r") as fp:
@@ -570,6 +594,23 @@ if __name__ == "__main__":
         # Apply the move.
         sliding_brick.applyMove(move)
 
+    elif command == "compare":
+        if len(sys.argv) < 4:
+            print(f"Usage: sh run.sh compare <file_1.txt> <file_2.txt>")
+            sys.exit(1)
+        
+        file_1: str = sys.argv[2]
+
+        file_2: str = sys.argv[3]
+
+        try:
+            sliding_brick_1: SlidingBrick = loadGame(file_1)
+            sliding_brick_2: SlidingBrick = loadGame(file_2)
+        except FileNotFoundError:
+            print("Error: One of the files doesn't exist.")
+            sys.exit(1)
+        
+        print(compareState(sliding_brick_1, sliding_brick_2))
     else:
         print(f"Error: Unknown command '{command}'.")
         sys.exit(1)
