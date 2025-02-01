@@ -218,7 +218,7 @@ class SlidingBrick:
                                             moves.add((self.__board[new_row][new_column], opposite_directions[direction]))
 
 
-                            elif len(adjacents) == 2 or len(adjacents) == 3:
+                            elif len(adjacents) >= 2:
                                 # Still the brick could be either horizontal or vertical.
                                 # Same logic as before, but: if horizontal, needs three empty spaces to move up/down. If vertical, needs three empty spaces to move left/right.
                                 
@@ -240,28 +240,6 @@ class SlidingBrick:
                                     elif direction in ["left", "right"]:
                                         for adjacent_row in rows:
                                             if (adjacent_row, list(columns)[0] + directions[opposite_directions[direction]][1]) in emptyCells:
-                                                directions[opposite_directions[direction]][1]
-
-                            elif (len(adjacents) > 3):
-                                # The brick can only be rectangle or squared, could only be horizontal or vertical.
-                                # The logic is same. But, might need different number of spaces on either way, depending on how much space it takes horizontally and vertically.
-                                
-                                if len(rows) == 1:
-                                    if direction in ["left", "right"]:
-                                        moves.add((self.__board[new_row][new_column], opposite_directions[direction]))
-                                    
-                                    elif direction in ["up", "down"]:
-                                        for adjacent_column in columns:
-                                            if (rows.pop()[0] + directions[opposite_directions[direction]][0], adjacent_column) in emptyCells:
-                                                moves.add((self.__board[new_row][new_column], opposite_directions[direction]))
-                                
-                                elif len(columns) == 1:
-                                    if direction in ["up", "down"]:
-                                        moves.add((self.__board[new_row][new_column], opposite_directions[direction]))
-                                    
-                                    elif direction in ["left", "right"]:
-                                        for adjacent_row in rows:
-                                            if (adjacent_row, columns.pop()[0] + directions[opposite_directions[direction]][1]) in emptyCells:
                                                 directions[opposite_directions[direction]][1]
                                 
                                 else:
@@ -303,10 +281,8 @@ class SlidingBrick:
             if found:
                 break
         
-        # TO DO: Get the adjacents of h, w from checkAdjacents(). If a single axis brick, use min, max of its row or column to swap with 0.
         # Also, if master brick is moved to exit (-1), swap -1 and 2 and fill the old place of 2 with 0.
         adjacents: set = self.checkAdjacent(row_start, column_start, move[0])
-        print(f"Adjacents for {move[0]}: {adjacents}")
         new_row, new_column = (row_start + row_offset, column_start + column_offset)
 
         # Below is for when there is no adjacent.
@@ -398,7 +374,6 @@ class SlidingBrick:
                                 new_board[r][column_start], new_board[r + row_offset][column_start + column_offset] = new_board[r + row_offset][column_start + column_offset],  new_board[r][column_start]
 
                     else:
-                        #print("The final boss\n")
                         # We will add the first position of the brick in adjacents set because we might need to swap it.
                         adjacents.add((row_start, column_start))
 
@@ -421,73 +396,7 @@ class SlidingBrick:
                         elif direction == "down":
                             for col in columns:
                                 new_board[min(rows)][col], new_board[max(rows) + row_offset][col + column_offset] = new_board[max(rows) + row_offset][col + column_offset], new_board[min(rows)][col]
-        
 
-                # elif len(adjacents) > 3:
-                #     # If going right, swap with min column for all rows. If going left, swap with max column for all rows..
-                #     # If going up, swap with max row for all columns. If going down, swap with min row for all columns.
-                #     #print(f"Adjacents = {len(adjacents)} and length of row is {len(rows)} and column is {len(columns)}.\n")
-
-                #     # If rows set has only one item, then the brick is horizontal.
-                #     if len(rows) == 1:
-                #         # If going right, swap with min column. If going left, swap with max column.
-                #         if direction == "left":
-                #             new_board[row_start][max(column_start, max(columns))], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[row_start][max(column_start, max(columns))]
-                        
-                #         elif direction == "right":
-                #             new_board[row_start][min(column_start, min(columns))], new_board[adjacent_row + row_offset][adjacent_column + column_offset] = new_board[adjacent_row + row_offset][adjacent_column + column_offset], new_board[row_start][min(column_start, min(columns))]
-                        
-                #         elif direction in ["up", "down"]:
-                #             # Swap the initial tile.
-                #             new_board[row_start][column_start], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[row_start][column_start]
-
-                #             # Swap the rest of the adjacent bricks with its corresponding offset tile.
-                #             for col in columns:
-                #                 new_board[row_start][col], new_board[row_start + row_offset][col + column_offset] = new_board[row_start + row_offset][col + column_offset], new_board[row_start][col]
-                    
-                #     # If columns set has only one item, then the brick is vertical.
-                #     elif len(columns) == 1:
-                #         # If going up, swap with max row. If going down, swap with min row.
-                #         if direction == "up":
-                #             new_board[max(row_start, max(rows))][column_start], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[max(row_start, max(rows))][column_start]
-                        
-                #         elif direction == "down":
-                #             new_board[min(row_start, min(rows))][column_start], new_board[adjacent_row + row_offset][adjacent_column + column_offset] = new_board[adjacent_row + row_offset][adjacent_column + column_offset], new_board[min(row_start, min(rows))][column_start]
-                        
-                #         elif direction in ["left", "right"]:
-                #             # Swap the initial tile.
-                #             new_board[row_start][column_start], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[row_start][column_start]
-
-                #             # Swap the rest of the adjacent bricks with its corresponding offset tile.
-                #             for r in rows:
-                #                 new_board[r][column_start], new_board[r + row_offset][column_start + column_offset] = new_board[r + row_offset][column_start + column_offset],  new_board[r][column_start]
-                    
-                #     else:
-                #         #print("The final boss\n")
-                #         # We will add the first position of the brick in adjacents set because we might need to swap it.
-                #         adjacents.add((row_start, column_start))
-
-                #         # Update the rows and columns set.
-                #         rows: set = {location[0] for location in adjacents}
-                #         columns: set = {location[1] for location in adjacents}
-
-                #         if direction == "left":
-                #             for r in rows:
-                #                 new_board[r][max(columns)], new_board[r + row_offset][min(columns) + column_offset] = new_board[r + row_offset][min(columns) + column_offset], new_board[r][max(columns)]
-                        
-                #         elif direction == "right":
-                #             for r in rows:
-                #                 new_board[r][min(columns)], new_board[r + row_offset][max(columns) + column_offset] = new_board[r + row_offset][max(columns) + column_offset], new_board[r][min(columns)]
-                        
-                #         elif direction == "up":
-                #             for col in columns:
-                #                 new_board[max(rows)][col], new_board[min(rows) + row_offset][col + column_offset] = new_board[min(rows) + row_offset][col + column_offset], new_board[max(rows)][col]
-                        
-                #         elif direction == "down":
-                #             for col in columns:
-                #                 new_board[min(rows)][col], new_board[max(rows) + row_offset][col + column_offset] = new_board[max(rows) + row_offset][col + column_offset], new_board[min(rows)][col]
-
-                    
         self.__board = new_board
 
         # If -1 is not in the border and is inside somewhere because it got swapped, change -1 to 0. 
@@ -498,7 +407,7 @@ class SlidingBrick:
                     if not (h == 0 or h == self.__height - 1 or w == 0 or w == self.__width - 1):
                         self.__board[h][w] = 0
 
-        # self.printBoard()
+        # self.printBoard()     # Commented this to prevent double printing while running random Walk.
 
     # swapIdx function.
     def swapIdx(self, index_1: int, index_2: int) -> None:
@@ -523,7 +432,7 @@ class SlidingBrick:
                     self.swapIdx(next_index, self.__board[h][w])
                     next_index += 1
         
-        # self.printBoard()
+        # self.printBoard()     # Commented this to prevent double printing while running random Walk.
 
 # Function to compare the state of two boards.
 def compareState(sliding_brick_1: SlidingBrick, sliding_brick_2: SlidingBrick) -> bool:
