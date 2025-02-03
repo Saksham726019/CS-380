@@ -403,8 +403,6 @@ class SlidingBrick:
                     if not (h == 0 or h == self.__height - 1 or w == 0 or w == self.__width - 1):
                         self.__board[h][w] = 0
 
-        # self.printBoard()     # Commented this to prevent double printing while running random Walk.
-
     # swapIdx function.
     def swapIdx(self, index_1: int, index_2: int) -> None:
         for r in range(self.__height):
@@ -427,8 +425,6 @@ class SlidingBrick:
                 elif self.__board[h][w] > next_index:
                     self.swapIdx(next_index, self.__board[h][w])
                     next_index += 1
-        
-        # self.printBoard()     # Commented this to prevent double printing while running random Walk.
 
 # Function to compare the state of two boards.
 def compareState(sliding_brick_1: SlidingBrick, sliding_brick_2: SlidingBrick) -> bool:
@@ -586,6 +582,9 @@ if __name__ == "__main__":
         # Apply the move.
         sliding_brick.applyMove(move)
 
+        # Print the board.
+        sliding_brick.printBoard()
+
     elif command == "compare":
         if len(sys.argv) < 4:
             print(f"Usage: sh run.sh compare <file_1.txt> <file_2.txt>")
@@ -615,6 +614,9 @@ if __name__ == "__main__":
 
         # Normalize the board.
         sliding_brick.normalize()
+
+        # Print the board.
+        sliding_brick.printBoard()
 
     elif command == "random":
         if len(sys.argv) < 4:
