@@ -6,9 +6,27 @@ class SlidingBrick:
         self.__width: int = w
         self.__height: int = h
         self.__board: list = board
+        self.__parent: SlidingBrick = None
         self.__emptyCells: list = []  # Store (row/height, column/width) tuple in this list.
         self.__masterBrickPositions: list = []
+        self.__move: tuple = None
     
+    # Function to set the parent.
+    def setParent(self, parent) -> None:
+        self.__parent = parent
+    
+    # Function to get the parent.
+    def getParent(self):
+        return self.__parent
+    
+    # Function to set the move that led to this current state.
+    def setMove(self, move: tuple) -> None:
+        self.__move = move
+    
+    # Function to get the move that led to this current state.
+    def getStateMove(self) -> tuple:
+        return self.__move
+
     # Function to get the height of the board.
     def getHeight(self) -> int:
         return self.__height
@@ -501,6 +519,63 @@ def loadGame(filename) -> SlidingBrick:
     sliding_brick = SlidingBrick(width, height, board)
     return sliding_brick
 
+# Function to convert the board state from list to tuple since sets don't store lists.
+def tuple_board(board: list) -> tuple:
+    return tuple(tuple(row) for row in board)
+
+# Function that applies BFS.
+def BFSTraversal(board_state: SlidingBrick) -> list:
+    # Add the initial board state to both empty queue and set.
+    queue: list = [board_state]
+    visited_states: set = set()
+
+    visited_states.add(tuple_board(board_state.getBoard()))
+
+    while queue:
+        current_state: SlidingBrick = queue.pop(0)
+
+        # If current state is the goal state, then we will return the parent-child heirarchy to the goal state.
+        if current_state.isGoalState():
+            solution_path: list = []
+
+            while current_state is not None:
+                solution_path.append(current_state)
+                current_state = current_state.getParent()
+
+            # Since the heirarchy will be from goal to initial, we need to reverse to get from initial to goal.
+            solution_path.reverse()
+
+            # Return the solution path.
+            return solution_path
+        
+        # Apply each available moves of the current state.
+        for move in current_state.getMoves():
+            # Create a new board state.
+            new_state: SlidingBrick = SlidingBrick(current_state.getWidth(), current_state.getHeight(), current_state.cloneBoard())
+
+            # Apply each available move.
+            new_state.applyMove(move)
+
+            # Normalize the new state.
+            new_state.normalize()
+
+            # Get the tuple board.
+            new_state_tuple = tuple_board(new_state.getBoard())
+
+            if new_state_tuple not in visited_states:
+                # Set the current state as the new state's parent.
+                new_state.setParent(current_state)
+
+                # Set the move tha led current state to new state.
+                new_state.setMove(move)
+
+                # Add the new_state to visited_states set and queue.
+                visited_states.add(new_state_tuple)
+                queue.append(new_state)
+    
+    # At this point, there is no solution.
+    return None
+
 
 # Main function.
 if __name__ == "__main__":
@@ -632,6 +707,32 @@ if __name__ == "__main__":
 
         # Call the randomWalk function.
         randomWalk(sliding_brick, iterations)
+    
+    elif command == "bfs":
+        if len(sys.argv) < 3:
+            print(f"Usage: sh run.sh bfs <file.txt>")
+            sys.exit(1)
+        
+        filename: str = sys.argv[2]
+
+        board_state: SlidingBrick = loadGame(filename)
+
+        solution_path: list = BFSTraversal(board_state)
+
+        if solution_path is None:
+            print("This board has no solutions!")
+        
+        else:
+            state: SlidingBrick = None
+            for state in solution_path:
+                move = state.getStateMove()
+
+                if move is not None:
+                    print(f"({move[0]},{move[1]})")
+            
+            print("\n")
+
+            state.printBoard()
 
     else:
         print(f"Error: Unknown command '{command}'.")
