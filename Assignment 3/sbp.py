@@ -1,5 +1,6 @@
 import sys
 import random
+import time
 
 class SlidingBrick:
     def __init__(self, w: int, h: int, board: list):
@@ -531,8 +532,12 @@ def BFSTraversal(board_state: SlidingBrick) -> list:
 
     visited_states.add(tuple_board(board_state.getBoard()))
 
+    # Variable to keep track of total nodes visited.
+    total_nodes: int = 0
+
     while queue:
         current_state: SlidingBrick = queue.pop(0)
+        total_nodes += 1
 
         # If current state is the goal state, then we will return the parent-child heirarchy to the goal state.
         if current_state.isGoalState():
@@ -546,7 +551,7 @@ def BFSTraversal(board_state: SlidingBrick) -> list:
             solution_path.reverse()
 
             # Return the solution path.
-            return solution_path
+            return solution_path, total_nodes
         
         # Apply each available moves of the current state.
         for move in current_state.getMoves():
@@ -717,7 +722,9 @@ if __name__ == "__main__":
 
         board_state: SlidingBrick = loadGame(filename)
 
-        solution_path: list = BFSTraversal(board_state)
+        start = time.time()
+        solution_path, total_nodes = BFSTraversal(board_state)
+        end = time.time()
 
         if solution_path is None:
             print("This board has no solutions!")
@@ -728,11 +735,15 @@ if __name__ == "__main__":
                 move = state.getStateMove()
 
                 if move is not None:
-                    print(f"({move[0]},{move[1]})")
+                    print(f"({move[0]}, {move[1]})")
             
-            print("\n")
-
+            print()
             state.printBoard()
+
+            print()
+            print(total_nodes)
+            print(f"{end - start:.2f}")
+            print(len(solution_path))
 
     else:
         print(f"Error: Unknown command '{command}'.")
