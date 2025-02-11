@@ -525,18 +525,23 @@ def tuple_board(board: list) -> tuple:
     return tuple(tuple(row) for row in board)
 
 # Function that applies BFS.
-def BFSTraversal(board_state: SlidingBrick) -> list:
+def BFSTraversal(board_state: SlidingBrick):
+    # Noramize the initial board.
+    board_state.normalize()
+
     # Add the initial board state to both empty queue and set.
     queue: list = [board_state]
-    visited_states: set = set()
+    front_pointer: int = 0
 
+    visited_states: set = set()
     visited_states.add(tuple_board(board_state.getBoard()))
 
     # Variable to keep track of total nodes visited.
     total_nodes: int = 0
 
-    while queue:
-        current_state: SlidingBrick = queue.pop(0)
+    while front_pointer < len(queue):
+        current_state: SlidingBrick = queue[front_pointer]
+        front_pointer += 1
         total_nodes += 1
 
         # If current state is the goal state, then we will return the parent-child heirarchy to the goal state.
@@ -579,7 +584,7 @@ def BFSTraversal(board_state: SlidingBrick) -> list:
                 queue.append(new_state)
     
     # At this point, there is no solution.
-    return None
+    return None, total_nodes
 
 
 # Main function.
@@ -743,7 +748,7 @@ if __name__ == "__main__":
             print()
             print(total_nodes)
             print(f"{end - start:.2f}")
-            print(len(solution_path))
+            print(len(solution_path) - 1)   # Solution path has initial board, which should not be counted in length of solution.
 
     else:
         print(f"Error: Unknown command '{command}'.")
