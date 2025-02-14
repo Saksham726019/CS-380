@@ -1,16 +1,18 @@
 import sys
 import random
 import time
+from queue import PriorityQueue
 
 class SlidingBrick:
     def __init__(self, w: int, h: int, board: list):
         self.__width: int = w
         self.__height: int = h
         self.__board: list = board
-        self.__parent: SlidingBrick = None
-        self.__emptyCells: list = []  # Store (row/height, column/width) tuple in this list.
+        self.__emptyCells: list = []
         self.__masterBrickPositions: list = []
+        self.__exitPositions: list = []
         self.__move: tuple = None
+        self.__parent: SlidingBrick = None
     
     # Function to set the parent.
     def setParent(self, parent) -> None:
@@ -93,9 +95,26 @@ class SlidingBrick:
     # Function to set the empty cells/
     def setEmptyCells(self, emptyCells: list) -> None:
         self.__emptyCells = emptyCells.copy()
+    
+    # Function to find the exit positions.
+    def findExitPositions(self) -> None:
+        self.__exitPositions.clear()
+        for h in range(self.__height):
+            for w in range(self.__width):
+                if self.__board[h][w] == -1:
+                    self.__exitPositions.append((h, w))
+    
+    # Function to get the exit positions.
+    def getExitPositions(self) -> list:
+        return self.__exitPositions
+    
+    # Function to set the exit positions.
+    def setExitPositions(self, exitPositions: list) -> None:
+        self.__exitPositions = exitPositions.copy()
 
     # Function to find the master brick (2) in the board.
     def findMasterBrick(self) -> None:
+        self.__masterBrickPositions.clear()
         for h in range(self.__height):
             for w in range(self.__width):
                 if self.__board[h][w] == 2:
@@ -103,7 +122,6 @@ class SlidingBrick:
     
     # Functon to return master brick locations in the board.
     def getMasterBrickPositions(self) -> list:
-        self.__masterBrickPositions.clear()
         self.findMasterBrick()
         return self.__masterBrickPositions
 
@@ -505,6 +523,7 @@ class SlidingBrick:
                     self.swapIdx(next_index, self.__board[h][w])
                     next_index += 1
 
+
 # Function to compare the state of two boards.
 def compareState(sliding_brick_1: SlidingBrick, sliding_brick_2: SlidingBrick) -> bool:
     if (sliding_brick_1.getHeight() != sliding_brick_2.getHeight()) or (sliding_brick_1.getWidth() != sliding_brick_2.getWidth()):
@@ -676,13 +695,6 @@ def DFSTraversal(board_state: SlidingBrick):
             # Since the heirarchy will be from goal to initial, we need to reverse to get from initial to goal.
             solution_path.reverse()
 
-            # print("\n=== Visited States ===")
-            # for i, state_tuple in enumerate(visited_states):
-            #     print(f"\nState {i+1}:")
-            #     for row in state_tuple:
-            #         print(" ".join(str(cell) for cell in row))
-            # print("\n=== End of Visited States ===\n")
-            # Return the solution path.
             return solution_path, total_nodes
         
         # Apply each available moves of the current state.
@@ -699,10 +711,6 @@ def DFSTraversal(board_state: SlidingBrick):
             # Normalize the new state.
             new_state.normalize()
 
-            # print(f"\nmove: {move}")
-            # print(f"Normalized board:")
-            # new_state.printBoard()
-
             # Get the tuple board since sets don't store lists.
             new_state_tuple: tuple = tuple_board(new_state.getBoard())
 
@@ -712,14 +720,6 @@ def DFSTraversal(board_state: SlidingBrick):
                 new_state.setMove(move)                 # Set the move of this new_state to the move which led to this new_state.
                 visited_states.add(new_state_tuple)
                 stack.append(new_state)
-
-                # print("Parent board:")
-                # parent: SlidingBrick = new_state.getParent()
-                # parent.printBoard()
-
-                # if total_nodes % 100 == 0:
-                #     print(visited_states)
-                #     new_state.printBoard()
     
     return None, total_nodes
 
@@ -785,6 +785,99 @@ def IDSTraversal(board_state: SlidingBrick):
             return solution_path, total_nodes
         
         depth += 1
+
+# Heuristic function. Manhattan distance.
+def heuristic(board_state: SlidingBrick) -> int:
+    master_brick_positions: list = board_state.getMasterBrickPositions()
+    exit_positions: list = board_state.getExitPositions()
+
+    # Calculate the manhattan distance.
+    manhattan_dist = float('inf')
+    for (master_row, master_column) in master_brick_positions:
+        for (exit_row, exit_column) in exit_positions:
+            distance: int = abs(master_row - exit_row) + abs(master_column - exit_column)
+            if distance < manhattan_dist:
+                manhattan_dist = distance
+    
+    return manhattan_dist
+
+# Function that applies A*.
+def AStarTraversal(board_state: SlidingBrick):
+    total_nodes: int = 0
+    
+    # Using a counter in case the f(n) for previous state and new_state equals.
+    counter: int = 0
+
+    # Min heap/priority queue.
+    min_heap = PriorityQueue()
+
+    # Add initial board's path cost, that is 0.
+    path_and_cost: dict = {tuple_board(board_state.getBoard()) : 0}
+
+    # f(n) = path_cost + heuristic
+    initial_f: int = heuristic(board_state)
+
+    # Add the initial board to the heap and set.
+    min_heap.put((initial_f, 0, counter, board_state))
+    counter += 1
+
+    visited_states: set = set()
+
+    while min_heap:
+        current_state: SlidingBrick = None
+        current_f, current_path_cost, count, current_state = min_heap.get()
+        total_nodes += 1
+        current_tuple = tuple_board(current_state.getBoard())
+
+        if current_tuple in visited_states:
+            continue
+
+        visited_states.add(current_tuple)
+
+        # If current state is the goal state, then we will return the parent-child heirarchy to the goal state.
+        if current_state.isGoalState():
+            solution_path: list = []
+
+            while current_state is not None:
+                solution_path.append(current_state)
+                current_state = current_state.getParent()
+
+            # Since the heirarchy will be from goal to initial, we need to reverse to get from initial to goal.
+            solution_path.reverse()
+
+            return solution_path, total_nodes
+        
+        for move in current_state.getMoves():
+            # Create a new_state.
+            new_state: SlidingBrick = SlidingBrick(current_state.getWidth(), current_state.getHeight(), current_state.cloneBoard())
+
+            # Copy the empty cells location from current to the new_state.
+            new_state.setEmptyCells(current_state.getEmptyCells())    
+
+            # Copy the exit positions from current to new_state.
+            new_state.setExitPositions(current_state.getExitPositions())    
+
+            # Apply the move.
+            new_state.applyMove(move)
+
+            # Normalize the new state.
+            new_state.normalize()
+
+            # Get the tuple board since sets don't store lists.
+            new_state_tuple: tuple = tuple_board(new_state.getBoard())
+
+            # Add the new_state to set and stack if not visited.
+            new_path_cost: int = current_path_cost + 1
+
+            if new_state_tuple not in path_and_cost or new_path_cost < path_and_cost[new_state_tuple]:
+                new_state.setParent(current_state)      # Set the parent of this new_state to current_state.
+                new_state.setMove(move)                 # Set the move of this new_state to the move which led to this new_state.
+                path_and_cost[new_state_tuple] = new_path_cost
+                new_f: int = new_path_cost + heuristic(new_state)
+                min_heap.put((new_f, new_path_cost, counter, new_state))
+                counter += 1
+    
+    return None, total_nodes
 
 
 # Main function.
@@ -869,11 +962,6 @@ if __name__ == "__main__":
 
         # Print the board.
         sliding_brick.printBoard()
-
-        # Print the empty cells
-        emptyCells: list = sliding_brick.getEmptyCells()
-        for location in emptyCells:
-            print(location)
 
     elif command == "compare":
         if len(sys.argv) < 4:
@@ -1004,6 +1092,42 @@ if __name__ == "__main__":
 
         start = time.time()
         solution_path, total_nodes = IDSTraversal(board_state)
+        end = time.time()
+
+        if solution_path is None:
+            print("This board has no solutions!")
+        
+        else:
+            state: SlidingBrick = None
+            for state in solution_path:
+                move = state.getStateMove()
+
+                if move is not None:
+                    print(f"({move[0]}, {move[1]})")
+            
+            print("\n")
+            state.printBoard()
+
+            print("\n")
+            print(total_nodes)
+            print(f"{end - start:.2f}")
+            print(len(solution_path) - 1)   # Solution path has initial board, which should not be counted in length of solution.
+    
+    elif command == "astar":
+        if len(sys.argv) < 3:
+            print(f"Usage: sh run.sh astar <file.txt>")
+            sys.exit(1)
+        
+        filename: str = sys.argv[2]
+
+        board_state: SlidingBrick = loadGame(filename)
+
+        board_state.findEmptyCells()
+
+        board_state.findExitPositions()
+
+        start = time.time()
+        solution_path, total_nodes = AStarTraversal(board_state)
         end = time.time()
 
         if solution_path is None:
