@@ -70,8 +70,17 @@ class SlidingBrick:
                     
         return True
     
+    # Function to update the empty cells location.
+    def updateEmptyCells(self, prev_positions: list, new_positions: list) -> None:
+        for position in prev_positions:
+            if position in self.__emptyCells:
+                self.__emptyCells.remove(position)
+            
+        self.__emptyCells.extend(new_positions)
+
     # Function to find empty cells (0) in the board.
     def findEmptyCells(self) -> None:
+        self.__emptyCells.clear()
         for h in range(self.__height):
             for w in range(self.__width):
                 if self.__board[h][w] == 0:
@@ -79,10 +88,12 @@ class SlidingBrick:
     
     # Function to return the empty cells location.
     def getEmptyCells(self) -> list:
-        self.__emptyCells.clear()
-        self.findEmptyCells()
         return self.__emptyCells
     
+    # Function to set the empty cells/
+    def setEmptyCells(self, emptyCells: list) -> None:
+        self.__emptyCells = emptyCells.copy()
+
     # Function to find the master brick (2) in the board.
     def findMasterBrick(self) -> None:
         for h in range(self.__height):
@@ -304,12 +315,19 @@ class SlidingBrick:
         adjacents: set = self.checkAdjacent(row_start, column_start, move[0])
         new_row, new_column = (row_start + row_offset, column_start + column_offset)
 
-        # Below is for when there is no adjacent.
+        # List to store the location of empty cells before swapping.
+        prev_empty_cells: list = []
+
+        # List to store the location of empty cells after swapping.
+        new_empty_cells: list = []
+
         if (0 <= new_row < self.__height) and (0 <= new_column < self.__width):
 
             # If no adjacents, it's a single cell brick and can be swapped without worrying about adjacent empty cells.
             if(len(adjacents) == 0):
                 new_board[row_start][column_start], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[row_start][column_start]
+                prev_empty_cells.append((new_row, new_column))
+                new_empty_cells.append((row_start, column_start))
             
             else:
                 rows: set = {location[0] for location in adjacents}
@@ -324,33 +342,49 @@ class SlidingBrick:
                         # If going right, swap with min column. If going left, swap with max column.
                         if direction == "left":
                             new_board[row_start][max(column_start, adjacent_column)], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[row_start][max(column_start, adjacent_column)]
+                            prev_empty_cells.append((new_row, new_column))
+                            new_empty_cells.append((row_start, max(column_start, adjacent_column)))
                         
                         elif direction == "right":
                             new_board[row_start][min(column_start, adjacent_column)], new_board[adjacent_row + row_offset][adjacent_column + column_offset] = new_board[adjacent_row + row_offset][adjacent_column + column_offset], new_board[row_start][min(column_start, adjacent_column)]
+                            prev_empty_cells.append((adjacent_row + row_offset, adjacent_column + column_offset))
+                            new_empty_cells.append((row_start, min(column_start, adjacent_column)))
                         
                         # Swap each location.
                         elif direction in ["up", "down"]:
                             # Swap the initial tile.
                             new_board[row_start][column_start], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[row_start][column_start]
+                            prev_empty_cells.append((new_row, new_column))
+                            new_empty_cells.append((row_start, column_start))
 
                             # Swap the adjacent brick with its corresponding empty cell.
                             new_board[adjacent_row][adjacent_column], new_board[adjacent_row + row_offset][adjacent_column + column_offset] = new_board[adjacent_row + row_offset][adjacent_column + column_offset], new_board[adjacent_row][adjacent_column]
+                            prev_empty_cells.append((adjacent_row + row_offset, adjacent_column + column_offset))
+                            new_empty_cells.append((adjacent_row, adjacent_column))
                     
                     # If the columns are same (means brick is vertical).
                     elif row_start != adjacent_row and column_start == adjacent_column:
                         # If going up, swap with max row. If going down, swap with min row.
                         if direction == "up":
                             new_board[max(row_start, adjacent_row)][column_start], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[max(row_start, adjacent_row)][column_start]
-                        
+                            prev_empty_cells.append((new_row, new_column))
+                            new_empty_cells.append((max(row_start, adjacent_row), column_start))
+
                         elif direction == "down":
                             new_board[min(row_start, adjacent_row)][column_start], new_board[adjacent_row + row_offset][adjacent_column + column_offset] = new_board[adjacent_row + row_offset][adjacent_column + column_offset], new_board[min(row_start, adjacent_row)][column_start]
-                        
+                            prev_empty_cells.append((adjacent_row + row_offset, adjacent_column + column_offset))
+                            new_empty_cells.append((min(row_start, adjacent_row), column_start))
+
                         elif direction in ["left", "right"]:
                             # Swap the initial tile.
                             new_board[row_start][column_start], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[row_start][column_start]
+                            prev_empty_cells.append((new_row, new_column))
+                            new_empty_cells.append((row_start, column_start))
 
                             # Swap the adjacent brick with its corresponding offset tile.
                             new_board[adjacent_row][adjacent_column], new_board[adjacent_row + row_offset][adjacent_column + column_offset] = new_board[adjacent_row + row_offset][adjacent_column + column_offset], new_board[adjacent_row][adjacent_column]
+                            prev_empty_cells.append((adjacent_row + row_offset, adjacent_column + column_offset))
+                            new_empty_cells.append((adjacent_row, adjacent_column))
                 
                 elif len(adjacents) >= 2:
                     #print(f"Adjacents = {len(adjacents)} and length of row is {len(rows)} and column is {len(columns)}.\n")
@@ -359,34 +393,49 @@ class SlidingBrick:
                         # If going right, swap with min column. If going left, swap with max column.
                         if direction == "left":
                             new_board[row_start][max(column_start, max(columns))], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[row_start][max(column_start, max(columns))]
+                            prev_empty_cells.append((new_row, new_column))
+                            new_empty_cells.append((row_start, max(column_start, max(columns))))
                         
                         elif direction == "right":
                             new_board[row_start][min(column_start, min(columns))], new_board[adjacent_row + row_offset][adjacent_column + column_offset] = new_board[adjacent_row + row_offset][adjacent_column + column_offset], new_board[row_start][min(column_start, min(columns))]
+                            prev_empty_cells.append((adjacent_row + row_offset, adjacent_column + column_offset))
+                            new_empty_cells.append((row_start, min(column_start, min(columns))))
                         
                         elif direction in ["up", "down"]:
                             # Swap the initial tile.
                             new_board[row_start][column_start], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[row_start][column_start]
+                            prev_empty_cells.append((new_row, new_column))
+                            new_empty_cells.append((row_start, column_start))
 
                             # Swap the rest of the adjacent bricks with its corresponding offset tile.
                             for col in columns:
                                 new_board[row_start][col], new_board[row_start + row_offset][col + column_offset] = new_board[row_start + row_offset][col + column_offset], new_board[row_start][col]
+                                prev_empty_cells.append((row_start + row_offset, col + column_offset))
+                                new_empty_cells.append((row_start, col))
                     
                     # If columns set has only one item, then the brick is vertical.
                     elif len(columns) == 1:
                         # If going up, swap with max row. If going down, swap with min row.
                         if direction == "up":
                             new_board[max(row_start, max(rows))][column_start], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[max(row_start, max(rows))][column_start]
+                            prev_empty_cells.append((new_row, new_column))
+                            new_empty_cells.append((max(row_start, max(rows)), column_start))
                         
                         elif direction == "down":
                             new_board[min(row_start, min(rows))][column_start], new_board[adjacent_row + row_offset][adjacent_column + column_offset] = new_board[adjacent_row + row_offset][adjacent_column + column_offset], new_board[min(row_start, min(rows))][column_start]
+                            prev_empty_cells.append((adjacent_row + row_offset, adjacent_column + column_offset))
+                            new_empty_cells.append((min(row_start, min(rows)), column_start))
                         
                         elif direction in ["left", "right"]:
                             # Swap the initial tile.
                             new_board[row_start][column_start], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[row_start][column_start]
+                            new_empty_cells.append((row_start, column_start))
 
                             # Swap the rest of the adjacent bricks with its corresponding offset tile.
                             for r in rows:
                                 new_board[r][column_start], new_board[r + row_offset][column_start + column_offset] = new_board[r + row_offset][column_start + column_offset],  new_board[r][column_start]
+                                prev_empty_cells.append((r + row_offset, column_start + column_offset))
+                                new_empty_cells.append((r, column_start))
 
                     else:
                         # We will add the first position of the brick in adjacents set because we might need to swap it.
@@ -399,28 +448,39 @@ class SlidingBrick:
                         if direction == "left":
                             for r in rows:
                                 new_board[r][max(columns)], new_board[r + row_offset][min(columns) + column_offset] = new_board[r + row_offset][min(columns) + column_offset], new_board[r][max(columns)]
+                                prev_empty_cells.append((r + row_offset, min(columns) + column_offset))
+                                new_empty_cells.append((r, max(columns)))
                         
                         elif direction == "right":
                             for r in rows:
                                 new_board[r][min(columns)], new_board[r + row_offset][max(columns) + column_offset] = new_board[r + row_offset][max(columns) + column_offset], new_board[r][min(columns)]
+                                prev_empty_cells.append((r + row_offset, max(columns) + column_offset))
+                                new_empty_cells.append((r, min(columns)))
                         
                         elif direction == "up":
                             for col in columns:
                                 new_board[max(rows)][col], new_board[min(rows) + row_offset][col + column_offset] = new_board[min(rows) + row_offset][col + column_offset], new_board[max(rows)][col]
+                                prev_empty_cells.append((min(rows) + row_offset, col + column_offset))
+                                new_empty_cells.append((max(rows), col))
                         
                         elif direction == "down":
                             for col in columns:
                                 new_board[min(rows)][col], new_board[max(rows) + row_offset][col + column_offset] = new_board[max(rows) + row_offset][col + column_offset], new_board[min(rows)][col]
+                                prev_empty_cells.append((max(rows) + row_offset, col + column_offset))
+                                new_empty_cells.append((min(rows), col))
 
         self.__board = new_board
+        self.updateEmptyCells(prev_empty_cells, new_empty_cells)
 
+        # If brick that was moved was master brick, then we need to check if it reached the goal.
         # If -1 is not in the border and is inside somewhere because it got swapped, change -1 to 0. 
         # The board won't have -1 at all which indicates goal condition.
-        for h in range(self.__height):
-            for w in range(self.__width):
-                if self.__board[h][w] == -1:
-                    if not (h == 0 or h == self.__height - 1 or w == 0 or w == self.__width - 1):
-                        self.__board[h][w] = 0
+        if brick == 2:
+            for h in range(self.__height):
+                for w in range(self.__width):
+                    if self.__board[h][w] == -1:
+                        if not (h == 0 or h == self.__height - 1 or w == 0 or w == self.__width - 1):
+                            self.__board[h][w] = 0
 
     # swapIdx function.
     def swapIdx(self, index_1: int, index_2: int) -> None:
@@ -526,12 +586,8 @@ def tuple_board(board: list) -> tuple:
 
 # Function that applies BFS.
 def BFSTraversal(board_state: SlidingBrick):
-    # Noramize the initial board.
-    board_state.normalize()
-
     # Add the initial board state to both empty queue and set.
-    queue: list = [board_state]
-    front_pointer: int = 0
+    current_level_queue: list = [board_state]
 
     visited_states: set = set()
     visited_states.add(tuple_board(board_state.getBoard()))
@@ -539,9 +595,74 @@ def BFSTraversal(board_state: SlidingBrick):
     # Variable to keep track of total nodes visited.
     total_nodes: int = 0
 
-    while front_pointer < len(queue):
-        current_state: SlidingBrick = queue[front_pointer]
-        front_pointer += 1
+    while current_level_queue:
+        next_level_queue: list = []
+        current_state: SlidingBrick = None
+
+        for current_state in current_level_queue:
+            total_nodes += 1
+
+            # If current state is the goal state, then we will return the parent-child heirarchy to the goal state.
+            if current_state.isGoalState():
+                solution_path: list = []
+
+                while current_state is not None:
+                    solution_path.append(current_state)
+                    current_state = current_state.getParent()
+
+                # Since the heirarchy will be from goal to initial, we need to reverse to get from initial to goal.
+                solution_path.reverse()
+
+                # Return the solution path.
+                return solution_path, total_nodes
+            
+            # Apply each available moves of the current state.
+            for move in current_state.getMoves():
+                # Create a new board state.
+                new_state: SlidingBrick = SlidingBrick(current_state.getWidth(), current_state.getHeight(), current_state.cloneBoard())
+
+                # Copy the empty cells location from current to the new_state.
+                new_state.setEmptyCells(current_state.getEmptyCells())
+
+                # Apply each available move.
+                new_state.applyMove(move)
+
+                # Normalize the new state.
+                new_state.normalize()
+
+                # Get the tuple board since sets don't store lists.
+                new_state_tuple: tuple = tuple_board(new_state.getBoard())
+
+                if new_state_tuple not in visited_states:
+                    # Set the current state as the new state's parent.
+                    new_state.setParent(current_state)
+
+                    # Set the move tha led current state to new state.
+                    new_state.setMove(move)
+
+                    # Add the new_state to visited_states set and queue.
+                    visited_states.add(new_state_tuple)
+                    next_level_queue.append(new_state)
+            
+            # Move to next level.
+            current_level_queue = next_level_queue
+            
+    # At this point, there is no solution.
+    return None, total_nodes
+
+# Function that applies DFS. stack method.
+def DFSTraversal(board_state: SlidingBrick):
+    # Add the initial board to stack and set.
+    stack: list = [board_state]
+
+    visited_states: set = set()
+    visited_states.add(tuple_board(board_state.getBoard()))
+
+    # Variable to keep track of the total nodes explored.
+    total_nodes: int = 0
+
+    while stack:
+        current_state: SlidingBrick = stack.pop()
         total_nodes += 1
 
         # If current state is the goal state, then we will return the parent-child heirarchy to the goal state.
@@ -555,35 +676,51 @@ def BFSTraversal(board_state: SlidingBrick):
             # Since the heirarchy will be from goal to initial, we need to reverse to get from initial to goal.
             solution_path.reverse()
 
+            # print("\n=== Visited States ===")
+            # for i, state_tuple in enumerate(visited_states):
+            #     print(f"\nState {i+1}:")
+            #     for row in state_tuple:
+            #         print(" ".join(str(cell) for cell in row))
+            # print("\n=== End of Visited States ===\n")
             # Return the solution path.
             return solution_path, total_nodes
         
         # Apply each available moves of the current state.
         for move in current_state.getMoves():
-            # Create a new board state.
+            # Create a new_state.
             new_state: SlidingBrick = SlidingBrick(current_state.getWidth(), current_state.getHeight(), current_state.cloneBoard())
 
-            # Apply each available move.
+            # Copy the empty cells location from current to the new_state.
+            new_state.setEmptyCells(current_state.getEmptyCells())            
+
+            # Apply the move.
             new_state.applyMove(move)
 
             # Normalize the new state.
             new_state.normalize()
 
-            # Get the tuple board.
-            new_state_tuple = tuple_board(new_state.getBoard())
+            # print(f"\nmove: {move}")
+            # print(f"Normalized board:")
+            # new_state.printBoard()
 
+            # Get the tuple board since sets don't store lists.
+            new_state_tuple: tuple = tuple_board(new_state.getBoard())
+
+            # Add the new_state to set and stack if not visited.
             if new_state_tuple not in visited_states:
-                # Set the current state as the new state's parent.
-                new_state.setParent(current_state)
-
-                # Set the move tha led current state to new state.
-                new_state.setMove(move)
-
-                # Add the new_state to visited_states set and queue.
+                new_state.setParent(current_state)      # Set the parent of this new_state to current_state.
+                new_state.setMove(move)                 # Set the move of this new_state to the move which led to this new_state.
                 visited_states.add(new_state_tuple)
-                queue.append(new_state)
+                stack.append(new_state)
+
+                # print("Parent board:")
+                # parent: SlidingBrick = new_state.getParent()
+                # parent.printBoard()
+
+                # if total_nodes % 100 == 0:
+                #     print(visited_states)
+                #     new_state.printBoard()
     
-    # At this point, there is no solution.
     return None, total_nodes
 
 
@@ -670,6 +807,11 @@ if __name__ == "__main__":
         # Print the board.
         sliding_brick.printBoard()
 
+        # Print the empty cells
+        emptyCells: list = sliding_brick.getEmptyCells()
+        for location in emptyCells:
+            print(location)
+
     elif command == "compare":
         if len(sys.argv) < 4:
             print(f"Usage: sh run.sh compare <file_1.txt> <file_2.txt>")
@@ -727,6 +869,8 @@ if __name__ == "__main__":
 
         board_state: SlidingBrick = loadGame(filename)
 
+        board_state.findEmptyCells()
+
         start = time.time()
         solution_path, total_nodes = BFSTraversal(board_state)
         end = time.time()
@@ -746,6 +890,40 @@ if __name__ == "__main__":
             state.printBoard()
 
             print()
+            print(total_nodes)
+            print(f"{end - start:.2f}")
+            print(len(solution_path) - 1)   # Solution path has initial board, which should not be counted in length of solution.
+
+    elif command == "dfs":
+        if len(sys.argv) < 3:
+            print(f"Usage: sh run.sh dfs <file.txt>")
+            sys.exit(1)
+        
+        filename: str = sys.argv[2]
+
+        board_state: SlidingBrick = loadGame(filename)
+
+        board_state.findEmptyCells()
+
+        start = time.time()
+        solution_path, total_nodes = DFSTraversal(board_state)
+        end = time.time()
+
+        if solution_path is None:
+            print("This board has no solutions!")
+        
+        else:
+            state: SlidingBrick = None
+            for state in solution_path:
+                move = state.getStateMove()
+
+                if move is not None:
+                    print(f"({move[0]}, {move[1]})")
+            
+            print("\n")
+            state.printBoard()
+
+            print("\n")
             print(total_nodes)
             print(f"{end - start:.2f}")
             print(len(solution_path) - 1)   # Solution path has initial board, which should not be counted in length of solution.
