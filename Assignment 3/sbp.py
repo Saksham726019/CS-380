@@ -633,7 +633,7 @@ def BFSTraversal(board_state: SlidingBrick):
                 # Get the tuple board since sets don't store lists.
                 new_state_tuple: tuple = tuple_board(new_state.getBoard())
 
-                if new_state_tuple not in visited_states:
+                if new_state_tuple not in visited_states and new_state not in current_level_queue:
                     # Set the current state as the new state's parent.
                     new_state.setParent(current_state)
 
@@ -722,6 +722,69 @@ def DFSTraversal(board_state: SlidingBrick):
                 #     new_state.printBoard()
     
     return None, total_nodes
+
+# Helper function for IDS.
+def DLS(current_state: SlidingBrick, visited_states: set, depth: int):
+    nodes_count = 1
+
+    if current_state.isGoalState():
+        return [current_state], nodes_count
+    
+    if depth == 0:
+        return None, nodes_count
+
+    for move in current_state.getMoves():
+        # Create a new_state.
+        new_state: SlidingBrick = SlidingBrick(current_state.getWidth(), current_state.getHeight(), current_state.cloneBoard())
+
+        # Copy the empty cells location from current to the new_state.
+        new_state.setEmptyCells(current_state.getEmptyCells())            
+
+        # Apply the move.
+        new_state.applyMove(move)
+
+        # Normalize the new state.
+        new_state.normalize()
+
+        # Get the tuple board since sets don't store lists.
+        new_state_tuple: tuple = tuple_board(new_state.getBoard())
+
+        if new_state_tuple not in visited_states:
+            new_state.setParent(current_state)      # Set the parent of this new_state to current_state.
+            new_state.setMove(move)                 # Set the move of this new_state to the move which led to this new_state.
+            visited_states.add(new_state_tuple)     # Add to the set.
+
+            # Recursively call DLS.
+            solution_path, nodes = DLS(new_state, visited_states, depth - 1)
+
+            # Increment the nodes_count from the return value of previous calls.
+            nodes_count += nodes
+
+            # Add the solution path from previous recursive call to current call.
+            if solution_path is not None:
+                return [current_state] + solution_path, nodes_count
+            
+    return None, nodes_count
+
+# Function that applies IDS. Recursive method.
+def IDSTraversal(board_state: SlidingBrick):
+    total_nodes: int = 0
+    depth: int = 0
+
+    solution_path: list = []
+
+    while True:
+        visited_states: set = set()
+        visited_states.add(tuple_board(board_state.getBoard()))
+
+        solution_path, nodes_count = DLS(board_state, visited_states, depth)
+
+        total_nodes += nodes_count
+    
+        if solution_path is not None:
+            return solution_path, total_nodes
+        
+        depth += 1
 
 
 # Main function.
@@ -907,6 +970,40 @@ if __name__ == "__main__":
 
         start = time.time()
         solution_path, total_nodes = DFSTraversal(board_state)
+        end = time.time()
+
+        if solution_path is None:
+            print("This board has no solutions!")
+        
+        else:
+            state: SlidingBrick = None
+            for state in solution_path:
+                move = state.getStateMove()
+
+                if move is not None:
+                    print(f"({move[0]}, {move[1]})")
+            
+            print("\n")
+            state.printBoard()
+
+            print("\n")
+            print(total_nodes)
+            print(f"{end - start:.2f}")
+            print(len(solution_path) - 1)   # Solution path has initial board, which should not be counted in length of solution.
+
+    elif command == "ids":
+        if len(sys.argv) < 3:
+            print(f"Usage: sh run.sh ids <file.txt>")
+            sys.exit(1)
+        
+        filename: str = sys.argv[2]
+
+        board_state: SlidingBrick = loadGame(filename)
+
+        board_state.findEmptyCells()
+
+        start = time.time()
+        solution_path, total_nodes = IDSTraversal(board_state)
         end = time.time()
 
         if solution_path is None:
