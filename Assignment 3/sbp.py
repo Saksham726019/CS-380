@@ -127,62 +127,104 @@ class SlidingBrick:
 
     # Function to check if adjacent cells are the same valued bricks.
     def checkAdjacent(self, h: int, w: int, brick: int) -> set:
-        # Directions (up, down, left, right)
-        directions = {
-            "up": (-1, 0),
-            "down": (1, 0),
-            "left": (0, -1),
-            "right": (0, 1)
-        }
+        # # Directions (up, down, left, right)
+        # directions = [
+        #     (-1, 0),
+        #     (1, 0),
+        #     (0, -1),
+        #     (0, 1)
+        # ]
 
-        adjacent = set()        # Use a set to store unique positions.
-        queue: list = [(h, w)]  # Store the locations as we traverse using bfs.
+        # adjacent = set()        # Use a set to store unique positions.
+        # queue: list = [(h, w)]  # Store the locations as we traverse using bfs.
 
-        for direction, (row_offset, col_offset) in directions.items():
-            front_pointer: int = 0
+        # for (row_offset, col_offset) in directions:
+        #     front_pointer: int = 0
 
-            while front_pointer < len(queue):
-                row, col = queue[front_pointer]
+        #     while front_pointer < len(queue):
+        #         row, col = queue[front_pointer]
 
-                new_row = row + row_offset
-                new_col = col + col_offset
+        #         new_row = row + row_offset
+        #         new_col = col + col_offset
 
-                # Check if the new location is within boundaries.
-                if 0 <= new_row < self.__height and 0 <= new_col < self.__width:
-                    # If it's the same brick, then add the location to set and continue in the same direction.
-                    if self.__board[new_row][new_col] == brick:
-                        adjacent.add((new_row, new_col))
-                        queue.append((new_row, new_col))
-                        front_pointer += 1
-                    else:
-                        break  # We no longer need to go in that direction if different brick is found.
+        #         # Check if the new location is within boundaries.
+        #         if 0 <= new_row < self.__height and 0 <= new_col < self.__width:
+        #             # If it's the same brick, then add the location to set and continue in the same direction.
+        #             if self.__board[new_row][new_col] == brick:
+        #                 adjacent.add((new_row, new_col))
+        #                 queue.append((new_row, new_col))
+        #                 front_pointer += 1
+        #             else:
+        #                 break  # We no longer need to go in that direction if different brick is found.
+
+        # return adjacent
+        adjacent = set()
+        for i in range(self.__height):
+            for j in range(self.__width):
+                if (i, j) != (h, w) and self.__board[i][j] == brick:
+                    adjacent.add((i, j))
 
         return adjacent
 
     # Function to get the moves of masterbrick towards the exit (-1) if there is any.
     def masterBrickMovesToExit(self) -> set:
-        # Get the master brick locations.
-        master_brick_locations: list = self.getMasterBrickPositions()
+        moves: set = set()
 
-        # Directions (up, down, left, right)
-        directions: dict = {
-            "up": (-1, 0),
-            "down": (1, 0),
-            "left": (0, -1),
-            "right": (0, 1)
-        }
+        # If -1 is on top of the board.
+        top_exits = [(row, column) for (row, column) in self.__exitPositions if row == 0]
 
-        moves = set()
+        # If -1 is on bottom of the board.
+        bottom_exits = [(row, column) for (row, column) in self.__exitPositions if row == self.__height - 1]
 
-        # Check all positions of the master brick.
-        for h, w in master_brick_locations:
-            for direction, (row_offset, col_offset) in directions.items():
-                new_row, new_col = h + row_offset, w + col_offset
+        # If -1 is on the left side of the board.
+        left_exits = [(row, column) for (row, column) in self.__exitPositions if column == 0]
 
-                # Check if the new position is within bounds and is an exit.
-                if 0 <= new_row < self.__height and 0 <= new_col < self.__width:
-                    if self.__board[new_row][new_col] == -1:
-                        moves.add((2, direction))
+        # If -1 is on the right side of the board.
+        right_exits = [(row, column) for (row, column) in self.__exitPositions if column == self.__width - 1]
+
+        # If the cell below is 2 for each exit position, then the move (2, up) is valid.
+        if top_exits:
+            print("exit is on top")
+            valid = True
+            for (row, column) in top_exits:
+                # Check that the cell below exists and is brick 2.
+                if self.__board[row + 1][column] != 2:
+                    valid = False
+                    print("Not valid yet")
+                    break
+            if valid:
+                print("Now it's valid")
+                moves.add((2, "up"))
+
+        # If the cell above is 2 for each exit position, then the move (2, down) is valid.
+        elif bottom_exits:
+            valid = True
+            for (row, column) in bottom_exits:
+                if self.__board[row - 1][column] != 2:
+                    valid = False
+                    break
+            if valid:
+                moves.add((2, "down"))
+
+        # If the cell on right is 2 for each exit position, then the move (2, left) is valid.
+        elif left_exits:
+            valid = True
+            for (row, column) in left_exits:
+                if self.__board[row][column + 1] != 2:
+                    valid = False
+                    break
+            if valid:
+                moves.add((2, "left"))
+
+        # If the cell on left is 2 for each exit position, then the move (2, right) is valid.
+        elif right_exits:
+            valid = True
+            for (row, column) in right_exits:
+                if self.__board[row][column - 1] != 2:
+                    valid = False
+                    break
+            if valid:
+                moves.add((2, "right"))
 
         return moves
 
@@ -359,14 +401,14 @@ class SlidingBrick:
                     if row_start == adjacent_row and column_start != adjacent_column:
                         # If going right, swap with min column. If going left, swap with max column.
                         if direction == "left":
-                            new_board[row_start][max(column_start, adjacent_column)], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[row_start][max(column_start, adjacent_column)]
+                            new_board[row_start][adjacent_column], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[row_start][adjacent_column]
                             prev_empty_cells.append((new_row, new_column))
-                            new_empty_cells.append((row_start, max(column_start, adjacent_column)))
+                            new_empty_cells.append((row_start, adjacent_column))
                         
                         elif direction == "right":
-                            new_board[row_start][min(column_start, adjacent_column)], new_board[adjacent_row + row_offset][adjacent_column + column_offset] = new_board[adjacent_row + row_offset][adjacent_column + column_offset], new_board[row_start][min(column_start, adjacent_column)]
-                            prev_empty_cells.append((adjacent_row + row_offset, adjacent_column + column_offset))
-                            new_empty_cells.append((row_start, min(column_start, adjacent_column)))
+                            new_board[row_start][column_start], new_board[row_start][adjacent_column + column_offset] = new_board[row_start][adjacent_column + column_offset], new_board[row_start][column_start]
+                            prev_empty_cells.append((row_start, adjacent_column + column_offset))
+                            new_empty_cells.append((row_start, column_start))
                         
                         # Swap each location.
                         elif direction in ["up", "down"]:
@@ -415,8 +457,8 @@ class SlidingBrick:
                             new_empty_cells.append((row_start, max(column_start, max(columns))))
                         
                         elif direction == "right":
-                            new_board[row_start][min(column_start, min(columns))], new_board[adjacent_row + row_offset][adjacent_column + column_offset] = new_board[adjacent_row + row_offset][adjacent_column + column_offset], new_board[row_start][min(column_start, min(columns))]
-                            prev_empty_cells.append((adjacent_row + row_offset, adjacent_column + column_offset))
+                            new_board[row_start][min(column_start, min(columns))], new_board[row_start + row_offset][max(columns) + column_offset] = new_board[row_start + row_offset][max(columns) + column_offset], new_board[row_start][min(column_start, min(columns))]
+                            prev_empty_cells.append((row_start + row_offset, max(columns) + column_offset))
                             new_empty_cells.append((row_start, min(column_start, min(columns))))
                         
                         elif direction in ["up", "down"]:
@@ -435,18 +477,19 @@ class SlidingBrick:
                     elif len(columns) == 1:
                         # If going up, swap with max row. If going down, swap with min row.
                         if direction == "up":
-                            new_board[max(row_start, max(rows))][column_start], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[max(row_start, max(rows))][column_start]
+                            new_board[max(rows)][column_start], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[max(rows)][column_start]
                             prev_empty_cells.append((new_row, new_column))
-                            new_empty_cells.append((max(row_start, max(rows)), column_start))
+                            new_empty_cells.append((max(rows), column_start))
                         
                         elif direction == "down":
-                            new_board[min(row_start, min(rows))][column_start], new_board[adjacent_row + row_offset][adjacent_column + column_offset] = new_board[adjacent_row + row_offset][adjacent_column + column_offset], new_board[min(row_start, min(rows))][column_start]
-                            prev_empty_cells.append((adjacent_row + row_offset, adjacent_column + column_offset))
+                            new_board[min(row_start, min(rows))][column_start], new_board[max(rows) + row_offset][column_start] = new_board[max(rows) + row_offset][column_start], new_board[min(row_start, min(rows))][column_start]
+                            prev_empty_cells.append((max(rows) + row_offset, column_start))
                             new_empty_cells.append((min(row_start, min(rows)), column_start))
                         
                         elif direction in ["left", "right"]:
                             # Swap the initial tile.
                             new_board[row_start][column_start], new_board[new_row][new_column] = new_board[new_row][new_column], new_board[row_start][column_start]
+                            prev_empty_cells.append((new_row, new_column))
                             new_empty_cells.append((row_start, column_start))
 
                             # Swap the rest of the adjacent bricks with its corresponding offset tile.
@@ -551,6 +594,7 @@ def randomWalk(sliding_brick: SlidingBrick, N: int):
     """
 
     for i in range(N):
+        print(f"\n{i}")
         # Generate all the moves available in the board.
         available_moves: set = sliding_brick.getMoves()
 
@@ -643,6 +687,9 @@ def BFSTraversal(board_state: SlidingBrick):
                 # Copy the empty cells location from current to the new_state.
                 new_state.setEmptyCells(current_state.getEmptyCells())
 
+                # Copy the exit positions from current to new_state.
+                new_state.setExitPositions(current_state.getExitPositions())
+
                 # Apply each available move.
                 new_state.applyMove(move)
 
@@ -703,7 +750,10 @@ def DFSTraversal(board_state: SlidingBrick):
             new_state: SlidingBrick = SlidingBrick(current_state.getWidth(), current_state.getHeight(), current_state.cloneBoard())
 
             # Copy the empty cells location from current to the new_state.
-            new_state.setEmptyCells(current_state.getEmptyCells())            
+            new_state.setEmptyCells(current_state.getEmptyCells())
+
+            # Copy the exit positions from current to new_state.
+            new_state.setExitPositions(current_state.getExitPositions())            
 
             # Apply the move.
             new_state.applyMove(move)
@@ -738,7 +788,10 @@ def DLS(current_state: SlidingBrick, visited_states: set, depth: int):
         new_state: SlidingBrick = SlidingBrick(current_state.getWidth(), current_state.getHeight(), current_state.cloneBoard())
 
         # Copy the empty cells location from current to the new_state.
-        new_state.setEmptyCells(current_state.getEmptyCells())            
+        new_state.setEmptyCells(current_state.getEmptyCells())     
+
+        # Copy the exit positions from current to new_state.
+        new_state.setExitPositions(current_state.getExitPositions())       
 
         # Apply the move.
         new_state.applyMove(move)
@@ -924,44 +977,125 @@ if __name__ == "__main__":
         # Load the game.
         sliding_brick: SlidingBrick = loadGame(filename)
 
+        # Find the empty cells.
+        sliding_brick.findEmptyCells()
+
         # Get the valid moves.
         moves: list = sliding_brick.getMoves()
 
+        if not moves:
+            print("No moves")
         # Print the moves.
         for move in moves:
             print(f"({move[0]}, {move[1]})")
     
     elif command == "applyMove":
-        if len(sys.argv) < 4:
-            print(f"Usage: sh run.sh applyMove <file.txt> <(brick, direction)>")
-            sys.exit(1)
+        # if len(sys.argv) < 4:
+        #     print(f"Usage: sh run.sh applyMove <file.txt> <(brick, direction)>")
+        #     sys.exit(1)
 
+        # filename: str = sys.argv[2]
+
+        # move_str: str = sys.argv[3][1 : -1]
+
+        # parts = move_str.split(", ")
+
+        # if len(parts) == 2:
+        #     try:
+        #         brick = int(parts[0])
+        #         direction = str(parts[1])
+        #         move: tuple = (brick, direction)
+        #     except ValueError:
+        #         print("Error: The brick number should be an integer.")
+        #         sys.exit(1)
+        # else:
+        #     print("Error: Invalid format. Expected (brick_number, direction).")
+        #     sys.exit(1)
+        
+        # # Load the game.
+        # sliding_brick: SlidingBrick = loadGame(filename)
+
+        # sliding_brick.findEmptyCells()
+
+        # # Apply the move.
+        # sliding_brick.applyMove(move)
+
+        # # Print the board.
+        # sliding_brick.printBoard()
+
+        if len(sys.argv) < 3:
+            print(f"Usage: sh run.sh applyMove <file.txt>")
+            sys.exit(1)
+        
         filename: str = sys.argv[2]
 
-        move_str: str = sys.argv[3][1 : -1]
-
-        parts = move_str.split(", ")
-
-        if len(parts) == 2:
-            try:
-                brick = int(parts[0])
-                direction = str(parts[1])
-                move: tuple = (brick, direction)
-            except ValueError:
-                print("Error: The brick number should be an integer.")
-                sys.exit(1)
-        else:
-            print("Error: Invalid format. Expected (brick_number, direction).")
-            sys.exit(1)
+        # Hard-coded list of moves to apply.
+        hardcoded_moves = [
+            (9, 'down'),
+            (9, 'down'),
+            (7, 'down'),
+            (8, 'left'),
+            (7, 'left'),
+            (4, 'down'),
+            (4, 'down'),
+            (2, 'right'),
+            (5, 'up'),
+            (4, 'up'),
+            (8, 'up'),
+            (6, 'up'),
+            (7, 'left'),
+            (8, 'left'),
+            (12, 'up'),
+            (12, 'right'),
+            (8, 'down'),
+            (2, 'down'),
+            (4, 'right'),
+            (5, 'up'),
+            (7, 'up'),
+            (11, 'up'),
+            (5, 'right'),
+            (4, 'right'),
+            (6, 'up'),
+            (8, 'up'),
+            (9, 'left'),
+            (12, 'left'),
+            (10, 'down'),
+            (2, 'down'),
+            (6, 'down'),
+            (5, 'right'),
+            (4, 'right'),
+            (8, 'up'),
+            (6, 'up'),
+            (9, 'up'),
+            (9, 'up'),
+            (11, 'left'),
+            (11, 'up'),
+            (12, 'left'),
+            (12, 'left'),
+            (2, 'down'),
+            (2, 'down'),
+            (2, 'left'),
+            (12, 'down'),
+            (2, 'right')
+        ]
         
         # Load the game.
         sliding_brick: SlidingBrick = loadGame(filename)
+        
+        # Optionally, initialize the exit positions if needed.
+        sliding_brick.findExitPositions()
+        sliding_brick.findEmptyCells()
 
-        # Apply the move.
-        sliding_brick.applyMove(move)
-
-        # Print the board.
-        sliding_brick.printBoard()
+        # Apply each move in the hard-coded list.
+        for move in hardcoded_moves:
+            print(f"Applying move: ({move[0]}, {move[1]})")
+            sliding_brick.applyMove(move)
+            sliding_brick.normalize()
+            sliding_brick.printBoard()
+            print()  # Print a newline for clarity
+        
+            # After applying all moves, wait 25 seconds.
+            input("Press Enter to apply next move.")
 
     elif command == "compare":
         if len(sys.argv) < 4:
@@ -1005,6 +1139,8 @@ if __name__ == "__main__":
         iterations: int = int(sys.argv[3])
 
         sliding_brick: SlidingBrick = loadGame(filename)
+        sliding_brick.findEmptyCells()
+        sliding_brick.findExitPositions()
 
         sliding_brick.printBoard()
 
@@ -1019,8 +1155,8 @@ if __name__ == "__main__":
         filename: str = sys.argv[2]
 
         board_state: SlidingBrick = loadGame(filename)
-
         board_state.findEmptyCells()
+        board_state.findExitPositions()
 
         start = time.time()
         solution_path, total_nodes = BFSTraversal(board_state)
@@ -1053,8 +1189,8 @@ if __name__ == "__main__":
         filename: str = sys.argv[2]
 
         board_state: SlidingBrick = loadGame(filename)
-
         board_state.findEmptyCells()
+        board_state.findExitPositions()
 
         start = time.time()
         solution_path, total_nodes = DFSTraversal(board_state)
@@ -1087,8 +1223,8 @@ if __name__ == "__main__":
         filename: str = sys.argv[2]
 
         board_state: SlidingBrick = loadGame(filename)
-
         board_state.findEmptyCells()
+        board_state.findExitPositions()
 
         start = time.time()
         solution_path, total_nodes = IDSTraversal(board_state)
@@ -1121,9 +1257,7 @@ if __name__ == "__main__":
         filename: str = sys.argv[2]
 
         board_state: SlidingBrick = loadGame(filename)
-
         board_state.findEmptyCells()
-
         board_state.findExitPositions()
 
         start = time.time()
