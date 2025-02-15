@@ -540,7 +540,7 @@ class SlidingBrick:
                         if not (h == 0 or h == self.__height - 1 or w == 0 or w == self.__width - 1):
                             self.__board[h][w] = 0
 
-    # swapIdx function.
+    # swapIdx function used by normalize().
     def swapIdx(self, index_1: int, index_2: int) -> None:
         for r in range(self.__height):
             for c in range(self.__width):
@@ -639,13 +639,13 @@ def loadGame(filename) -> SlidingBrick:
     sliding_brick = SlidingBrick(width, height, board)
     return sliding_brick
 
-# Function to convert the board state from list to tuple since sets don't store lists.
+# Function to convert the board state from list to tuple since sets don't store lists. Set needs non mutable object to hash it.
 def tuple_board(board: list) -> tuple:
     return tuple(tuple(row) for row in board)
 
 # Function that applies BFS.
 def BFSTraversal(board_state: SlidingBrick):
-    # Add the initial board state to both empty queue and set.
+    # Add the initial board state to queue and set.
     queue: list = [board_state]
     front_pointer: int = 0
 
@@ -765,7 +765,7 @@ def DFSTraversal(board_state: SlidingBrick):
     
     return None, total_nodes
 
-# Helper function for IDS.
+# Search function for IDS according to the depth. Recrusively search the board until depth times.
 def DLS(current_state: SlidingBrick, visited_states: set, depth: int):
     nodes_count = 1
 
@@ -818,6 +818,7 @@ def IDSTraversal(board_state: SlidingBrick):
 
     solution_path: list = []
 
+    # Keep increasing the depth until we find the goal. from depth = 0 to infinity
     while True:
         visited_states: set = set()
         visited_states.add(tuple_board(board_state.getBoard()))
@@ -869,7 +870,8 @@ def AStarTraversal(board_state: SlidingBrick):
     visited_states: set = set()
 
     while min_heap:
-        current_state: SlidingBrick = None
+        current_state: SlidingBrick = None      # Placeholder for the board_states that will be popped from the heap.
+
         current_f, current_path_cost, count, current_state = min_heap.get()
         total_nodes += 1
         current_tuple = tuple_board(current_state.getBoard())
@@ -922,6 +924,7 @@ def AStarTraversal(board_state: SlidingBrick):
                 min_heap.put((new_f, new_path_cost, counter, new_state))
                 counter += 1
     
+    # At this point, there is no solution.
     return None, total_nodes
 
 
@@ -966,20 +969,20 @@ if __name__ == "__main__":
 
         filename: str = sys.argv[2]
 
-        # Load the game.
+        # Load the game and find the empty cells (0) and where exits (-1) are.
         sliding_brick: SlidingBrick = loadGame(filename)
-
-        # Find the empty cells.
         sliding_brick.findEmptyCells()
+        sliding_brick.findExitPositions()
 
         # Get the valid moves.
         moves: list = sliding_brick.getMoves()
 
         if not moves:
             print("No moves")
-        # Print the moves.
-        for move in moves:
-            print(f"({move[0]}, {move[1]})")
+        
+        else:
+            for move in moves:
+                print(f"({move[0]}, {move[1]})")
     
     elif command == "applyMove":
         if len(sys.argv) < 4:
@@ -1004,10 +1007,10 @@ if __name__ == "__main__":
             print("Error: Invalid format. Expected (brick_number, direction).")
             sys.exit(1)
         
-        # Load the game.
+        # Load the game and find the empty cells (0) and where exits (-1) are.
         sliding_brick: SlidingBrick = loadGame(filename)
-
         sliding_brick.findEmptyCells()
+        sliding_brick.findExitPositions()
 
         # Apply the move.
         sliding_brick.applyMove(move)
@@ -1056,6 +1059,7 @@ if __name__ == "__main__":
         filename: str = sys.argv[2]
         iterations: int = int(sys.argv[3])
 
+        # Load the game and find the empty cells (0) and where exits (-1) are.
         sliding_brick: SlidingBrick = loadGame(filename)
         sliding_brick.findEmptyCells()
         sliding_brick.findExitPositions()
@@ -1072,6 +1076,7 @@ if __name__ == "__main__":
         
         filename: str = sys.argv[2]
 
+        # Load the game and find the empty cells (0) and where exits (-1) are.
         board_state: SlidingBrick = loadGame(filename)
         board_state.findEmptyCells()
         board_state.findExitPositions()
@@ -1106,6 +1111,7 @@ if __name__ == "__main__":
         
         filename: str = sys.argv[2]
 
+        # Load the game and find the empty cells (0) and where exits (-1) are.
         board_state: SlidingBrick = loadGame(filename)
         board_state.findEmptyCells()
         board_state.findExitPositions()
@@ -1140,6 +1146,7 @@ if __name__ == "__main__":
         
         filename: str = sys.argv[2]
 
+        # Load the game and find the empty cells (0) and where exits (-1) are.
         board_state: SlidingBrick = loadGame(filename)
         board_state.findEmptyCells()
         board_state.findExitPositions()
@@ -1174,6 +1181,7 @@ if __name__ == "__main__":
         
         filename: str = sys.argv[2]
 
+        # Load the game and find the empty cells (0) and where exits (-1) are.
         board_state: SlidingBrick = loadGame(filename)
         board_state.findEmptyCells()
         board_state.findExitPositions()
