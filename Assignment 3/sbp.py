@@ -184,16 +184,13 @@ class SlidingBrick:
 
         # If the cell below is 2 for each exit position, then the move (2, up) is valid.
         if top_exits:
-            print("exit is on top")
             valid = True
             for (row, column) in top_exits:
                 # Check that the cell below exists and is brick 2.
                 if self.__board[row + 1][column] != 2:
                     valid = False
-                    print("Not valid yet")
                     break
             if valid:
-                print("Now it's valid")
                 moves.add((2, "up"))
 
         # If the cell above is 2 for each exit position, then the move (2, down) is valid.
@@ -594,7 +591,6 @@ def randomWalk(sliding_brick: SlidingBrick, N: int):
     """
 
     for i in range(N):
-        print(f"\n{i}")
         # Generate all the moves available in the board.
         available_moves: set = sliding_brick.getMoves()
 
@@ -650,7 +646,8 @@ def tuple_board(board: list) -> tuple:
 # Function that applies BFS.
 def BFSTraversal(board_state: SlidingBrick):
     # Add the initial board state to both empty queue and set.
-    current_level_queue: list = [board_state]
+    queue: list = [board_state]
+    front_pointer: int = 0
 
     visited_states: set = set()
     visited_states.add(tuple_board(board_state.getBoard()))
@@ -658,61 +655,56 @@ def BFSTraversal(board_state: SlidingBrick):
     # Variable to keep track of total nodes visited.
     total_nodes: int = 0
 
-    while current_level_queue:
-        next_level_queue: list = []
-        current_state: SlidingBrick = None
+    while front_pointer < len(queue):
+        current_state: SlidingBrick = queue[front_pointer]
+        front_pointer += 1
+        total_nodes += 1
 
-        for current_state in current_level_queue:
-            total_nodes += 1
+        # If current state is the goal state, then we will return the parent-child heirarchy to the goal state.
+        if current_state.isGoalState():
+            solution_path: list = []
 
-            # If current state is the goal state, then we will return the parent-child heirarchy to the goal state.
-            if current_state.isGoalState():
-                solution_path: list = []
+            while current_state is not None:
+                solution_path.append(current_state)
+                current_state = current_state.getParent()
 
-                while current_state is not None:
-                    solution_path.append(current_state)
-                    current_state = current_state.getParent()
+            # Since the heirarchy will be from goal to initial, we need to reverse to get from initial to goal.
+            solution_path.reverse()
 
-                # Since the heirarchy will be from goal to initial, we need to reverse to get from initial to goal.
-                solution_path.reverse()
+            # Return the solution path.
+            return solution_path, total_nodes
+        
+        # Apply each available moves of the current state.
+        for move in current_state.getMoves():
+            # Create a new board state.
+            new_state: SlidingBrick = SlidingBrick(current_state.getWidth(), current_state.getHeight(), current_state.cloneBoard())
 
-                # Return the solution path.
-                return solution_path, total_nodes
-            
-            # Apply each available moves of the current state.
-            for move in current_state.getMoves():
-                # Create a new board state.
-                new_state: SlidingBrick = SlidingBrick(current_state.getWidth(), current_state.getHeight(), current_state.cloneBoard())
+            # Copy the empty cells location from current to the new_state.
+            new_state.setEmptyCells(current_state.getEmptyCells())
 
-                # Copy the empty cells location from current to the new_state.
-                new_state.setEmptyCells(current_state.getEmptyCells())
+            # Copy the exit positions from current to new_state.
+            new_state.setExitPositions(current_state.getExitPositions())
 
-                # Copy the exit positions from current to new_state.
-                new_state.setExitPositions(current_state.getExitPositions())
+            # Apply each available move.
+            new_state.applyMove(move)
 
-                # Apply each available move.
-                new_state.applyMove(move)
+            # Normalize the new state.
+            new_state.normalize()
 
-                # Normalize the new state.
-                new_state.normalize()
+            # Get the tuple board.
+            new_state_tuple = tuple_board(new_state.getBoard())
 
-                # Get the tuple board since sets don't store lists.
-                new_state_tuple: tuple = tuple_board(new_state.getBoard())
+            if new_state_tuple not in visited_states:
+                # Set the current state as the new state's parent.
+                new_state.setParent(current_state)
 
-                if new_state_tuple not in visited_states and new_state not in current_level_queue:
-                    # Set the current state as the new state's parent.
-                    new_state.setParent(current_state)
+                # Set the move tha led current state to new state.
+                new_state.setMove(move)
 
-                    # Set the move tha led current state to new state.
-                    new_state.setMove(move)
-
-                    # Add the new_state to visited_states set and queue.
-                    visited_states.add(new_state_tuple)
-                    next_level_queue.append(new_state)
-            
-            # Move to next level.
-            current_level_queue = next_level_queue
-            
+                # Add the new_state to visited_states set and queue.
+                visited_states.add(new_state_tuple)
+                queue.append(new_state)
+    
     # At this point, there is no solution.
     return None, total_nodes
 
@@ -990,112 +982,38 @@ if __name__ == "__main__":
             print(f"({move[0]}, {move[1]})")
     
     elif command == "applyMove":
-        # if len(sys.argv) < 4:
-        #     print(f"Usage: sh run.sh applyMove <file.txt> <(brick, direction)>")
-        #     sys.exit(1)
-
-        # filename: str = sys.argv[2]
-
-        # move_str: str = sys.argv[3][1 : -1]
-
-        # parts = move_str.split(", ")
-
-        # if len(parts) == 2:
-        #     try:
-        #         brick = int(parts[0])
-        #         direction = str(parts[1])
-        #         move: tuple = (brick, direction)
-        #     except ValueError:
-        #         print("Error: The brick number should be an integer.")
-        #         sys.exit(1)
-        # else:
-        #     print("Error: Invalid format. Expected (brick_number, direction).")
-        #     sys.exit(1)
-        
-        # # Load the game.
-        # sliding_brick: SlidingBrick = loadGame(filename)
-
-        # sliding_brick.findEmptyCells()
-
-        # # Apply the move.
-        # sliding_brick.applyMove(move)
-
-        # # Print the board.
-        # sliding_brick.printBoard()
-
-        if len(sys.argv) < 3:
-            print(f"Usage: sh run.sh applyMove <file.txt>")
+        if len(sys.argv) < 4:
+            print(f"Usage: sh run.sh applyMove <file.txt> <(brick, direction)>")
             sys.exit(1)
-        
+
         filename: str = sys.argv[2]
 
-        # Hard-coded list of moves to apply.
-        hardcoded_moves = [
-            (9, 'down'),
-            (9, 'down'),
-            (7, 'down'),
-            (8, 'left'),
-            (7, 'left'),
-            (4, 'down'),
-            (4, 'down'),
-            (2, 'right'),
-            (5, 'up'),
-            (4, 'up'),
-            (8, 'up'),
-            (6, 'up'),
-            (7, 'left'),
-            (8, 'left'),
-            (12, 'up'),
-            (12, 'right'),
-            (8, 'down'),
-            (2, 'down'),
-            (4, 'right'),
-            (5, 'up'),
-            (7, 'up'),
-            (11, 'up'),
-            (5, 'right'),
-            (4, 'right'),
-            (6, 'up'),
-            (8, 'up'),
-            (9, 'left'),
-            (12, 'left'),
-            (10, 'down'),
-            (2, 'down'),
-            (6, 'down'),
-            (5, 'right'),
-            (4, 'right'),
-            (8, 'up'),
-            (6, 'up'),
-            (9, 'up'),
-            (9, 'up'),
-            (11, 'left'),
-            (11, 'up'),
-            (12, 'left'),
-            (12, 'left'),
-            (2, 'down'),
-            (2, 'down'),
-            (2, 'left'),
-            (12, 'down'),
-            (2, 'right')
-        ]
+        move_str: str = sys.argv[3][1 : -1]
+
+        parts = move_str.split(", ")
+
+        if len(parts) == 2:
+            try:
+                brick = int(parts[0])
+                direction = str(parts[1])
+                move: tuple = (brick, direction)
+            except ValueError:
+                print("Error: The brick number should be an integer.")
+                sys.exit(1)
+        else:
+            print("Error: Invalid format. Expected (brick_number, direction).")
+            sys.exit(1)
         
         # Load the game.
         sliding_brick: SlidingBrick = loadGame(filename)
-        
-        # Optionally, initialize the exit positions if needed.
-        sliding_brick.findExitPositions()
+
         sliding_brick.findEmptyCells()
 
-        # Apply each move in the hard-coded list.
-        for move in hardcoded_moves:
-            print(f"Applying move: ({move[0]}, {move[1]})")
-            sliding_brick.applyMove(move)
-            sliding_brick.normalize()
-            sliding_brick.printBoard()
-            print()  # Print a newline for clarity
-        
-            # After applying all moves, wait 25 seconds.
-            input("Press Enter to apply next move.")
+        # Apply the move.
+        sliding_brick.applyMove(move)
+
+        # Print the board.
+        sliding_brick.printBoard()
 
     elif command == "compare":
         if len(sys.argv) < 4:
@@ -1171,7 +1089,7 @@ if __name__ == "__main__":
                 move = state.getStateMove()
 
                 if move is not None:
-                    print(f"({move[0]}, {move[1]})")
+                    print(f"({move[0]},{move[1]})")
             
             print()
             state.printBoard()
@@ -1205,12 +1123,12 @@ if __name__ == "__main__":
                 move = state.getStateMove()
 
                 if move is not None:
-                    print(f"({move[0]}, {move[1]})")
+                    print(f"({move[0]},{move[1]})")
             
-            print("\n")
+            print()
             state.printBoard()
 
-            print("\n")
+            print()
             print(total_nodes)
             print(f"{end - start:.2f}")
             print(len(solution_path) - 1)   # Solution path has initial board, which should not be counted in length of solution.
@@ -1239,12 +1157,12 @@ if __name__ == "__main__":
                 move = state.getStateMove()
 
                 if move is not None:
-                    print(f"({move[0]}, {move[1]})")
+                    print(f"({move[0]},{move[1]})")
             
-            print("\n")
+            print()
             state.printBoard()
 
-            print("\n")
+            print()
             print(total_nodes)
             print(f"{end - start:.2f}")
             print(len(solution_path) - 1)   # Solution path has initial board, which should not be counted in length of solution.
@@ -1273,12 +1191,12 @@ if __name__ == "__main__":
                 move = state.getStateMove()
 
                 if move is not None:
-                    print(f"({move[0]}, {move[1]})")
+                    print(f"({move[0]},{move[1]})")
             
-            print("\n")
+            print()
             state.printBoard()
 
-            print("\n")
+            print()
             print(total_nodes)
             print(f"{end - start:.2f}")
             print(len(solution_path) - 1)   # Solution path has initial board, which should not be counted in length of solution.
