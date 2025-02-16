@@ -766,7 +766,7 @@ def DFSTraversal(board_state: SlidingBrick):
     return None, total_nodes
 
 # Search function for IDS according to the depth. Recrusively search the board until depth times.
-def DLS(current_state: SlidingBrick, visited_states: set, depth: int):
+def DLS(current_state: SlidingBrick, visited_states: dict, depth: int, level: int):
     nodes_count = 1
 
     if current_state.isGoalState():
@@ -793,14 +793,15 @@ def DLS(current_state: SlidingBrick, visited_states: set, depth: int):
 
         # Get the tuple board since sets don't store lists.
         new_state_tuple: tuple = tuple_board(new_state.getBoard())
+        new_level = level + 1
 
-        if new_state_tuple not in visited_states:
-            new_state.setParent(current_state)      # Set the parent of this new_state to current_state.
-            new_state.setMove(move)                 # Set the move of this new_state to the move which led to this new_state.
-            visited_states.add(new_state_tuple)     # Add to the set.
+        if new_state_tuple not in visited_states or new_level < visited_states[new_state_tuple]:
+            visited_states[new_state_tuple] = new_level     # Add to the set.
+            new_state.setParent(current_state)              # Set the parent of this new_state to current_state.
+            new_state.setMove(move)                         # Set the move of this new_state to the move which led to this new_state.
 
             # Recursively call DLS.
-            solution_path, nodes = DLS(new_state, visited_states, depth - 1)
+            solution_path, nodes = DLS(new_state, visited_states, depth - 1, new_level)
 
             # Increment the nodes_count from the return value of previous calls.
             nodes_count += nodes
@@ -808,6 +809,10 @@ def DLS(current_state: SlidingBrick, visited_states: set, depth: int):
             # Add the solution path from previous recursive call to current call.
             if solution_path is not None:
                 return [current_state] + solution_path, nodes_count
+            
+            # Not sure if this line is needed. Code is really slow because of this.
+            # else:
+            #     del visited_states[new_state_tuple]
             
     return None, nodes_count
 
@@ -820,10 +825,12 @@ def IDSTraversal(board_state: SlidingBrick):
 
     # Keep increasing the depth until we find the goal. from depth = 0 to infinity
     while True:
-        visited_states: set = set()
-        visited_states.add(tuple_board(board_state.getBoard()))
+        visited_states: dict = {}
+        
+        initial_board_tuple: tuple = tuple_board(board_state.getBoard())
+        visited_states[initial_board_tuple] = 0
 
-        solution_path, nodes_count = DLS(board_state, visited_states, depth)
+        solution_path, nodes_count = DLS(board_state, visited_states, depth, 0)
 
         total_nodes += nodes_count
     
