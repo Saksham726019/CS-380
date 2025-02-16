@@ -127,41 +127,10 @@ class SlidingBrick:
 
     # Function to check if adjacent cells are the same valued bricks.
     def checkAdjacent(self, h: int, w: int, brick: int) -> set:
-        # # Directions (up, down, left, right)
-        # directions = [
-        #     (-1, 0),
-        #     (1, 0),
-        #     (0, -1),
-        #     (0, 1)
-        # ]
-
-        # adjacent = set()        # Use a set to store unique positions.
-        # queue: list = [(h, w)]  # Store the locations as we traverse using bfs.
-
-        # for (row_offset, col_offset) in directions:
-        #     front_pointer: int = 0
-
-        #     while front_pointer < len(queue):
-        #         row, col = queue[front_pointer]
-
-        #         new_row = row + row_offset
-        #         new_col = col + col_offset
-
-        #         # Check if the new location is within boundaries.
-        #         if 0 <= new_row < self.__height and 0 <= new_col < self.__width:
-        #             # If it's the same brick, then add the location to set and continue in the same direction.
-        #             if self.__board[new_row][new_col] == brick:
-        #                 adjacent.add((new_row, new_col))
-        #                 queue.append((new_row, new_col))
-        #                 front_pointer += 1
-        #             else:
-        #                 break  # We no longer need to go in that direction if different brick is found.
-
-        # return adjacent
         adjacent = set()
         for i in range(self.__height):
             for j in range(self.__width):
-                if (i, j) != (h, w) and self.__board[i][j] == brick:
+                if (i, j) != (h, w) and self.__board[i][j] == brick:        # Add the locations of the brick except the starting ones.
                     adjacent.add((i, j))
 
         return adjacent
