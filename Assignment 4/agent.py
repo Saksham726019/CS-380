@@ -2,13 +2,13 @@ import math
 import random
 
 import game
+import othello
 
 class HumanPlayer(game.Player):
-
     def __init__(self):
         super().__init__()
 
-    def choose_move(self, state):
+    def choose_move(self, state: game.othello.State):
         # generate the list of moves:
         moves = state.generateMoves()
 
@@ -18,7 +18,18 @@ class HumanPlayer(game.Player):
         return moves[int(response)]
 
 class RandomAgent(game.Player):
-    pass
+    def __init__(self):
+        super().__init__()
+
+    # Function that gets the Othello state, generates the available move and returns a randomly choosen move.
+    def choose_move(self, state: othello.State) -> othello.OthelloMove:
+        moves: list = state.generateMoves()
+
+        if not moves:
+            return None
+        
+        return random.choice(moves)
+
 
 
 class MinimaxAgent(game.Player):

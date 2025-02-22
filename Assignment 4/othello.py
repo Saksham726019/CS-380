@@ -88,7 +88,7 @@ class State:
         return score
     
     #  Returns the list of possible moves for player 'player'
-    def generateMoves(self, player = None):
+    def generateMoves(self, player = None) -> list:
 
         if player == None:
             player = self.nextPlayerToMove
