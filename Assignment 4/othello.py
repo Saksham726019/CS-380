@@ -21,7 +21,6 @@ class OthelloMove:
 
 class State:
     def __init__(self, board = None, boardSize = 8, nextPlayerToMove = PLAYER1):
-        
         if board:
             self.board = board
             self.boardSize = boardSize
@@ -122,8 +121,7 @@ class State:
     # Modifies the game state as for applying the given 'move'
     # Notice that move can be "null", which means that the player passes.
     # "passing" is only allowed if a player has no other moves available.
-    def applyMove(self, move):
-
+    def applyMove(self, move) -> None:
         if move == None:
             print("\nPlayer " + PLAYER_NAMES[self.nextPlayerToMove] + " passes the move!")
             self.nextPlayerToMove = OTHER_PLAYER[self.nextPlayerToMove]

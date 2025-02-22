@@ -8,14 +8,15 @@ class HumanPlayer(game.Player):
     def __init__(self):
         super().__init__()
 
-    def choose_move(self, state: game.othello.State):
+    def choose_move(self, state: othello.State) -> othello.State:
         # generate the list of moves:
-        moves = state.generateMoves()
+        moves: list = state.generateMoves()
 
         for i, action in enumerate(moves):
             print('{}: {}'.format(i, action))
         response = input('Please choose a move: ')
         return moves[int(response)]
+
 
 class RandomAgent(game.Player):
     def __init__(self):
