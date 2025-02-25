@@ -12,6 +12,9 @@ class HumanPlayer(game.Player):
         # generate the list of moves:
         moves: list = state.generateMoves()
 
+        if not moves:
+            return None
+
         for i, action in enumerate(moves):
             print('{}: {}'.format(i, action))
         response = input('Please choose a move: ')
@@ -89,7 +92,7 @@ class MinimaxAgent(game.Player):
             
         return best_move
 
-
+# !!!!!! NEED TO DOCUMENT THE TIMING AGAINST STANDARD MINMAX FOR CODE DOCUMENTATION !!!!
 class AlphaBeta(game.Player):
     def __init__(self, depth: int):
         super().__init__()

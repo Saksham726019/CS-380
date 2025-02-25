@@ -34,11 +34,18 @@ class State:
             self.nextPlayerToMove =  nextPlayerToMove
             
             self.board = [[EMPTY] * boardSize for y in range(boardSize)]
-            #  initial position:
+            # initial position:
             self.board[boardSize//2-1][boardSize//2-1] = PLAYER1
             self.board[boardSize//2][boardSize//2] = PLAYER1
             self.board[boardSize//2-1][boardSize//2] = PLAYER2
             self.board[boardSize//2][boardSize//2-1] = PLAYER2
+
+            # This was for fun
+            # self.board[boardSize//2-1][boardSize//2-1] = PLAYER2
+            # self.board[boardSize//2][boardSize//2] = PLAYER2
+            # self.board[boardSize//2-1][boardSize//2] = PLAYER1
+            # self.board[boardSize//2][boardSize//2-1] = PLAYER1
+
     
     # Converts a game board to a string, for displaying it via the console
     def __str__(self):
