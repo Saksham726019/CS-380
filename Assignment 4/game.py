@@ -1,4 +1,5 @@
 import othello
+import agent
 # import util
 
 
@@ -36,4 +37,12 @@ class Game:
         
         print("\n*** Final winner: " + state.winner() +" ***" )
         print(state)
+
+        # If the player is minimax or alphabeta, print out the average time taken per move.
+        # This proves that alphabeta is much faster.
+        if isinstance(self.players[0], (agent.MinimaxAgent, agent.AlphaBeta)):
+            self.players[0].printAverageTime()
+        if isinstance(self.players[1], (agent.MinimaxAgent, agent.AlphaBeta)):
+            self.players[1].printAverageTime()
+
         return states

@@ -1,5 +1,6 @@
 import math
 import random
+import time
 
 import game
 import othello
@@ -39,6 +40,8 @@ class MinimaxAgent(game.Player):
     def __init__(self, depth: int):
         super().__init__()
         self.__depth: int = depth
+        self.__numMoves: int = 0
+        self.__totalTime: float = 0
 
     # Function that uses standard minimax algorithm to help choose our AI the best move. Evaluation function is the score.
     # We will use the tree with max as root as we want the move that gives the agent the max score.
@@ -73,6 +76,7 @@ class MinimaxAgent(game.Player):
     
     # Function that gets the Othello state, generates the available move and returns the best move using standard minimax algorithm.
     def choose_move(self, state: othello.State) -> othello.OthelloMove:
+        start_time = time.time()
         best_score: int = -math.inf
         best_move: othello.OthelloMove = None
 
@@ -90,13 +94,26 @@ class MinimaxAgent(game.Player):
                 best_score = move_score
                 best_move = move
             
+        end_time = time.time()  # End timing
+        move_time = end_time - start_time
+        self.__totalTime += move_time
+        self.__numMoves += 1
+            
         return best_move
+    
+    # Function to print the average time per move.
+    def printAverageTime(self):
+        if self.__numMoves > 0:
+            average_time: float = self.__totalTime / self.__numMoves
+            print(f"Minimax for depth {self.__depth}; Average time per move: {average_time}")
 
-# !!!!!! NEED TO DOCUMENT THE TIMING AGAINST STANDARD MINMAX FOR CODE DOCUMENTATION !!!!
+
 class AlphaBeta(game.Player):
     def __init__(self, depth: int):
         super().__init__()
         self.__depth: int = depth
+        self.__numMoves: int = 0
+        self.__totalTime: float = 0
 
     # Function that uses alpha-beta pruning minimax algorithm to help choose our AI the best move. 
     # Evaluation function is the score.
@@ -145,6 +162,7 @@ class AlphaBeta(game.Player):
 
 
     def choose_move(self, state: othello.State) -> othello.OthelloMove:
+        start_time = time.time()
         alpha: int = -math.inf
         beta: int = math.inf
         best_score: int = -math.inf
@@ -166,4 +184,16 @@ class AlphaBeta(game.Player):
             
             alpha = max(alpha, move_score)
         
+        end_time = time.time()
+        move_time = end_time - start_time
+        self.__totalTime += move_time
+        self.__numMoves += 1
+        
         return best_move
+    
+    # Function to print the average time per move.
+    def printAverageTime(self):
+        if self.__numMoves > 0:
+            average_time: float = self.__totalTime / self.__numMoves
+            print(f"Minimax for depth {self.__depth}; Average time per move: {average_time}")
+
