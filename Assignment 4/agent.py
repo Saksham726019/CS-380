@@ -195,5 +195,5 @@ class AlphaBeta(game.Player):
     def printAverageTime(self):
         if self.__numMoves > 0:
             average_time: float = self.__totalTime / self.__numMoves
-            print(f"Minimax for depth {self.__depth}; Average time per move: {average_time}")
+            print(f"Alpha Beta for depth {self.__depth}; Average time per move: {average_time}")
 
